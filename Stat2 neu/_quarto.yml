@@ -1,0 +1,46 @@
+project:
+  type: book
+  output-dir: docs
+
+book:
+  title: "Statistik 2: Inferenz und Modellierung"
+  author: "Sang-Min Park"
+  date: today
+  chapters:
+    - index.qmd
+    - 01_grundlagen_inferenz.qmd
+    - 02_angewandte_inferenz.qmd
+    - 03_regression_deskriptiv.qmd  
+    - 04_logistische_regression.qmd  
+    - 05_modellauswahl.qmd
+    - 06_faktoranalyse.qmd
+    - 07_quarto.qmd
+
+lang: de
+bibliography: references.bib
+
+format:
+  html:
+    theme: spacelab
+    toc: true
+    toc-depth: 2
+    number-sections: true
+    code-fold: true
+    highlight-style: github
+  pdf:
+    documentclass: scrreprt
+    number-sections: true
+    colorlinks: true
+    
+# Globale Filter für das gesamte Buch
+filters:
+  - output-styling
+
+# Globale Einstellungen für die Extension
+output-styling:
+  appearance: default
+
+execute:
+  echo: false
+  warning: false
+  message: false

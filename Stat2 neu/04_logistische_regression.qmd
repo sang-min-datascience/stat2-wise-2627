@@ -1,0 +1,216 @@
+
+# Logistische Regression
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+# Setup-Chunk für dieses Kapitel
+library(openintro)
+library(dplyr)
+library(ggplot2)
+library(broom)
+library(patchwork)
+
+# Vorbereitung des Datensatzes
+set.seed(42)
+resume <- resume |>
+  mutate(
+    erhaltener_rückruf = as.factor(received_callback),
+    erhaltener_rückruf_num = received_callback, # Für Plots
+    geschlecht = if_else(gender == "m", "Mann", "Frau"),
+    ethnie = if_else(race == "black", "Schwarz", "Weiß"),
+    auszeichnungen = as.factor(honors) # <-- Hier fehlte die Übersetzung!
+  )
+```
+
+::: {.callout-note appearance="simple"}
+## Kompetenzziele für dieses Kapitel
+
+Nach der Bearbeitung dieses Kapitels können Sie:
+
+1.  **Grenzen der linearen Regression:** Erklären, warum OLS für binäre Zielvariablen (0/1) ungeeignet ist.
+2.  **Logistische Modellierung:** Modelle für binäre Daten in R (`glm(..., family = "binomial")`) anpassen und die Signifikanz der Prädiktoren ablesen.
+3.  **Nicht-lineare marginale Effekte:** Log-Odds in interpretierbare Wahrscheinlichkeiten umrechnen und verstehen, warum der marginale Effekt in der logistischen Regression nicht konstant ist.
+:::
+
+Oft stehen wir vor Forschungsfragen, bei denen das Ergebnis keine kontinuierliche Zahl (wie ein Preis oder eine Länge) ist, sondern eine **kategoriale Entscheidung mit zwei Ausprägungen (Ja/Nein)**:
+
+- Klickt ein Nutzer auf die Anzeige? (Ja/Nein)
+- Fällt ein Bauteil aus? (Ja/Nein)
+- Erhält eine Bewerbung einen Rückruf? (Ja/Nein) Wir kodieren diese Ergebnisse als 1 (Erfolg/Ereignis tritt ein) und 0 (Misserfolg).
+
+## Warum die lineare Regression hier scheitert
+
+Wenn wir versuchen, eine Zielvariable, die nur aus 0 und 1 besteht, mit der bekannten linearen Regression (`lm()`) zu modellieren, stoßen wir auf massive Probleme.
+
+::: {.callout-tip icon="false"}
+## Visuelle Intuition: Die Gerade vs. die S-Kurve
+
+```{r}
+
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-height: 4
+#| fig-cap: "Die lineare Modellierung (links) erzeugt unsinnige Wahrscheinlichkeiten < 0 und > 1. Die logistische S-Kurve (rechts) bleibt strikt im gültigen Wahrscheinlichkeitsraum [0, 1]."
+library(ggplot2)
+library(dplyr)
+library(patchwork)
+
+# Synthetische Daten für den perfekten didaktischen Effekt
+set.seed(42)
+x_lernstunden <- runif(200, 0, 10)
+# Erzeuge eine echte logistische Wahrscheinlichkeit (S-Form)
+p_bestanden <- exp(-5 + 1.2 * x_lernstunden) / (1 + exp(-5 + 1.2 * x_lernstunden))
+# Ziehe binäre Ergebnisse (0 oder 1) basierend auf dieser Wahrscheinlichkeit
+y_ergebnis <- rbinom(200, 1, p_bestanden)
+
+df_sim <- data.frame(Lernstunden = x_lernstunden, Bestanden = y_ergebnis)
+
+p_lin <- ggplot(df_sim, aes(x = Lernstunden, y = Bestanden)) +
+  geom_jitter(height = 0.05, alpha = 0.3, color = "grey30") +
+  geom_smooth(method = "lm", se = FALSE, color = "red", linewidth = 1.2) +
+  geom_hline(yintercept = c(0, 1), linetype = "dashed", color = "black", alpha = 0.5) +
+  theme_minimal() +
+  coord_cartesian(ylim = c(-0.2, 1.2)) +
+  labs(title = "Falsch: Lineare Regression", x = "Lernaufwand (Stunden)", y = "Wahrscheinlichkeit (Bestanden)")
+
+p_log <- ggplot(df_sim, aes(x = Lernstunden, y = Bestanden)) +
+  geom_jitter(height = 0.05, alpha = 0.3, color = "grey30") +
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), se = FALSE, color = "blue", linewidth = 1.2) +
+  geom_hline(yintercept = c(0, 1), linetype = "dashed", color = "black", alpha = 0.5) +
+  theme_minimal() +
+  coord_cartesian(ylim = c(-0.2, 1.2)) +
+  labs(title = "Richtig: Logistische Regression", x = "Lernaufwand (Stunden)", y = NULL)
+
+p_lin + p_log
+```
+
+Die rote Linie (OLS) schießt für extrem hohen oder niedrigen Lernaufwand über die Grenzen von 100 % und 0 % hinaus. Eine Wahrscheinlichkeit von 120 % oder -15 % ist mathematisch unsinnig. Die blaue Kurve (Logistische Regression) nähert sich asymptotisch an die Grenzen 0 und 1 an.
+:::
+
+## Das Logistische Modell
+
+Um sicherzustellen, dass unsere Vorhersagen immer zwischen 0 und 1 bleiben, modellieren wir nicht direkt die Wahrscheinlichkeit $p$, sondern transformieren sie. Wir nutzen den **Logit** (den natürlichen Logarithmus der Chancen, auch *Log-Odds* genannt).
+
+Unsere Regressionsgleichung lautet nun: $$ \log_e\left(\frac{p}{1-p}\right) = b_0 + b_1 x_1 + b_2 x_2 + \dots + b_k x_k $$
+
+Das Geniale an dieser Transformation: Die linke Seite kann nun Werte von $-\infty$ bis $+\infty$ annehmen. Wir können die rechte Seite exakt so aufbauen wie bei der klassischen linearen Regression.
+
+### Operative Umsetzung in R (`glm`)
+
+Da OLS hier nicht mehr funktioniert, nutzen wir die Funktion für **Generalized Linear Models (`glm()`)** und sagen R ausdrücklich, dass die Fehlerverteilung binomial ist.
+
+Wir analysieren experimentelle Daten (`resume`). Forscher schickten gefälschte Lebensläufe an echte Stellenanzeigen. Die Lebensläufe unterschieden sich zufällig in Berufserfahrung, Auszeichnungen und dem Namen, der entweder typischerweise weiß oder schwarz klang. Zielvariable ist `erhaltener_rückruf` (1 = Ja, 0 = Nein).
+
+```{r}
+#| echo: true
+#| eval: true
+# Modelliere: Rückruf anhand von Ethnie und Berufserfahrung
+modell_logit <- glm(erhaltener_rückruf ~ ethnie + years_experience, 
+                    data = resume, 
+                    family = "binomial")
+
+tidy(modell_logit) |> select(term, estimate, p.value)
+```
+
+**Wie Sie diese Tabelle lesen:**
+
+1.  **Inferenz (`p.value`):** Wir lesen dies exakt wie bei der linearen Regression. Die Koeffizienten für `ethnieWeiß` und `years_experience` sind beide signifikant (p \< 0.05). Beide Prädiktoren haben einen statistisch nachweisbaren Effekt auf die Rückrufquote.
+2.  **Deskription (`estimate`):** **Vorsicht!** Diese Zahlen (z.B. $0,438$ für die Ethnie) sind **keine** Wahrscheinlichkeiten. Es sind die Änderungen der *Log-Odds*. Ein positiver Wert bedeutet: Die Wahrscheinlichkeit steigt. Ein negativer Wert bedeutet: Sie sinkt.
+
+Ein weißer Name erhöht also die Wahrscheinlichkeit eines Rückrufs (ceteris paribus). Aber um wie viel Prozent genau? Das können wir an dieser Zahl nicht direkt ablesen.
+
+------------------------------------------------------------------------
+
+## Marginale Effekte in der logistischen Regression
+
+In Kapitel 3 haben wir gelernt, dass der marginale Effekt die partielle Ableitung der Vorhersage nach der Variable $x$ ist ($\frac{\partial \hat{y}}{\partial x}$). 
+
+Bei der klassischen OLS-Regression war das eine Konstante (die Linie ist überall gleich steil). Bei der logistischen Regression ist unsere Vorhersagekurve jedoch ein **"S"**. 
+
+::: {.callout-tip icon="false"}
+## Visuelle Intuition: Der nicht-konstante marginale Effekt
+
+```{r}
+#| echo: false
+#| fig-height: 4.5
+#| fig-cap: "Die logistische S-Kurve. Die Steigung (der marginale Effekt) hängt stark davon ab, wo man sich auf der Kurve befindet."
+library(ggplot2)
+
+# Erzeuge Daten für die theoretische S-Kurve
+log_odds <- seq(-6, 6, length.out = 100)
+wahrscheinlichkeit <- exp(log_odds) / (1 + exp(log_odds))
+df_curve <- data.frame(log_odds, wahrscheinlichkeit)
+
+ggplot(df_curve, aes(x = log_odds, y = wahrscheinlichkeit)) +
+  geom_line(color = "blue", linewidth = 1.2) +
+  # Rotes Rechteck für den Bereich unserer Bewerber-Daten
+  annotate("rect", xmin = -3.5, xmax = -1.5, ymin = 0, ymax = 0.2, alpha = 0.2, fill = "red") +
+  annotate("text", x = -2.5, y = 0.25, label = "Unsere Bewerber\n(Basis-Quote ca. 8%)\nSehr flacher Effekt", color = "darkred", size = 3.5, fontface = "bold") +
+  # Pfeil für die steile Mitte
+  annotate("segment", x = -0.8, xend = 0.8, y = 0.3, yend = 0.7, color = "black", linewidth = 1, arrow = arrow(length = unit(0.2, "cm"))) +
+  annotate("text", x = 0, y = 0.78, label = "Maximaler marginaler Effekt\n(Kurve am steilsten)", color = "black", size = 3.5, fontface = "bold") +
+  theme_minimal() +
+  labs(x = "Linearer Prädiktor (Log-Odds)", y = "Wahrscheinlichkeit (p)")
+```
+
+*   **In der Mitte der S-Kurve** (Wahrscheinlichkeit bei 50 %) ist die Kurve am steilsten. Hier hat eine Änderung der Prädiktoren den maximalen marginalen Effekt.
+*   **In den extrem flachen Enden** (z.B. nahe 0 % oder 100 %) hat eine Änderung der Prädiktoren kaum noch einen Effekt (die Ableitung ist fast 0).
+*   **Unsere Fallstudie:** Rückrufe auf Bewerbungen sind generell selten. Unsere Bewerber (rotes Feld) stecken im unteren, flachen Tail der S-Kurve fest.
+:::
+
+**Fazit:** In der logistischen Regression ist der marginale Effekt **niemals konstant**. Er hängt zwingend davon ab, wie wahrscheinlich das Ereignis *vor* der Änderung von $x$ bereits war.
+
+### Wahrscheinlichkeiten berechnen
+
+Um aus den abstrakten Log-Odds greifbare Wahrscheinlichkeiten ($p$) zu machen, müssen wir die Modellgleichung umstellen:
+
+$$ p = \frac{e^{\text{Modellgleichung}}}{1 + e^{\text{Modellgleichung}}} $$
+
+*In R müssen wir das nicht per Hand rechnen. Wir nutzen die `predict()` Funktion mit dem Argument `type = "response"`, um Wahrscheinlichkeiten zu generieren.*
+
+### Fallstudie: Die Auswirkung von Diskriminierung
+
+Bauen wir ein voll spezifiziertes multiples Modell, um zu messen, wie stark sich ein "weiß klingender" Name gegenüber einem "schwarz klingenden" Namen auswirkt, wenn alle anderen Merkmale (Erfahrung, Abschluss, Auszeichnungen) im Lebenslauf identisch sind.
+
+```{r}
+#| echo: true
+#| eval: true
+modell_diskriminierung <- glm(erhaltener_rückruf ~ ethnie + geschlecht + years_experience + auszeichnungen, 
+                              data = resume, 
+                              family = "binomial")
+
+tidy(modell_diskriminierung) |> select(term, estimate, p.value)
+```
+
+Der Koeffizient für `ethnieWeiß` ist $0,442$ (p-Wert hochsignifikant). Die Diskriminierung ist statistisch nachweisbar. Um den Effekt greifbar zu machen, lassen wir R die Wahrscheinlichkeit für zwei identische fiktive Bewerbungen vorhersagen:
+
+- Bewerbung A: Schwarz, Mann, 10 Jahre Erfahrung, keine Auszeichnungen.
+- Bewerbung B: Weiß, Mann, 10 Jahre Erfahrung, keine Auszeichnungen.
+
+```{r}
+#| echo: true
+#| eval: true
+# 1. Wir bauen uns einen fiktiven Datensatz für die zwei Bewerber
+neue_bewerber <- data.frame(
+  ethnie = c("Schwarz", "Weiß"),
+  geschlecht = c("Mann", "Mann"),
+  years_experience = c(10, 10),
+  auszeichnungen = as.factor(c(0, 0)) # Muss als Faktor übergeben werden
+)
+
+# 2. Wir lassen das Modell die Wahrscheinlichkeiten (response) vorhersagen
+predict(modell_diskriminierung, newdata = neue_bewerber, type = "response")
+```
+
+**Interpretation des marginalen Effekts:** \* Der Bewerber mit dem schwarz klingenden Namen (Bewerbung A) hat eine Rückrufwahrscheinlichkeit von ca. **6,4 %**. \* Der Bewerber mit exakt demselben Lebenslauf, aber einem weiß klingenden Namen (Bewerbung B) hat eine Rückrufwahrscheinlichkeit von ca. **9,6 %**.
+
+Das bedeutet: Der marginale Effekt der Variable "Ethnie" bei genau diesem Bewerberprofil beträgt $+3,2$ Prozentpunkte. Relativ gesehen muss ein schwarzer Bewerber fast 50 % mehr Bewerbungen schreiben (da 9,6 % etwa das 1,5-fache von 6,4 % ist), um die gleiche Anzahl an Rückrufen zu erhalten.
+
+## Zusammenfassung der Entscheidungsstrukturen
+
+1.  **Modellauswahl:** Ist die Zielvariable binär (0/1), wechseln Sie von `lm()` zu `glm(..., family = "binomial")`.
+2.  **Signifikanz prüfen:** Lesen Sie den p-Wert in der `tidy()` Tabelle exakt wie bei der linearen Regression, um zu prüfen, ob ein Prädiktor das Modell signifikant verbessert.
+3.  **Effekte greifbar machen:** Interpretieren Sie die Koeffizienten (`estimate`) nicht direkt als Wahrscheinlichkeiten. Nutzen Sie `predict(..., type = "response")`, um Profile zu erstellen und die tatsächlichen, nicht-konstanten marginalen Effekte auf die Wahrscheinlichkeit zu quantifizieren.

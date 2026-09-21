@@ -1,0 +1,209 @@
+
+# Modellselektion
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+# Setup-Chunk für dieses Kapitel
+library(openintro)
+library(palmerpenguins)
+library(dplyr)
+library(ggplot2)
+library(broom)
+library(patchwork)
+library(caret) # Für die Kreuzvalidierung
+
+# Pinguine bereinigen
+penguins <- na.omit(penguins)
+```
+
+::: {.callout-note appearance="simple"}
+## Kompetenzziele für dieses Kapitel
+Nach der Bearbeitung dieses Kapitels können Sie:
+
+1. **Die Overfitting-Falle erkennen:** Verstehen, warum das Hinzufügen von immer mehr Variablen die Vorhersagekraft eines Modells auf neuen Daten zerstören kann.
+2. **Metriken zur Modellauswahl nutzen:** Das *Angepasste $R^2$* (für OLS) und das *AIC* (für logistische Regression) anwenden, um sparsame Modelle zu identifizieren.
+3. **Kreuzvalidierung (Cross-Validation) anwenden:** Den $k$-fachen Kreuzvalidierungs-Workflow in R programmieren, um die echte, out-of-sample Vorhersagegüte eines Modells zu messen.
+:::
+
+## Das Problem: Overfitting (Überanpassung)
+
+Ein weit verbreiteter Irrtum in der Datenanalyse ist: *"Je mehr Variablen ich in mein Modell werfe, desto genauer wird meine Vorhersage."*
+
+Mathematisch gesehen steigt das reguläre Bestimmtheitsmaß ($R^2$) immer an (oder bleibt im schlechtesten Fall gleich), wenn wir einen neuen Prädiktor hinzufügen – selbst wenn dieser Prädiktor absoluter Quatsch ist. Das Modell beginnt, das statistische Rauschen der spezifischen Stichprobe **auswendig zu lernen**, anstatt den echten zugrundeliegenden Trend zu **verstehen**. Diesen Effekt nennt man **Overfitting**.
+
+::: {.callout-tip icon="false"}
+## Visuelle Intuition: Die Gefahr des Auswendiglernens
+
+```{r}
+#| echo: false
+#| fig-height: 4.5
+#| fig-cap: "Links: Ein einfaches Modell, das den generellen Trend versteht. Rechts: Ein überangepasstes Modell (Overfitting), das die Datenpunkte auswendig lernt, aber bei neuen Daten massiv scheitern wird."
+set.seed(42)
+x_sim <- seq(1, 10, length.out = 15)
+y_sim <- 3 + 2 * x_sim + rnorm(15, 0, 3) # Echter Trend + Rauschen
+df_overfit <- data.frame(x = x_sim, y = y_sim)
+
+p_good <- ggplot(df_overfit, aes(x = x, y = y)) +
+  geom_point(size = 3, color = "grey30") +
+  geom_smooth(method = "lm", formula = y ~ x, se = FALSE, color = "blue", linewidth = 1.2) +
+  theme_minimal() + labs(title = "Sinnvolles Modell", subtitle = "Versteht den Trend", x = "x", y = "y")
+
+p_over <- ggplot(df_overfit, aes(x = x, y = y)) +
+  geom_point(size = 3, color = "grey30") +
+  geom_smooth(method = "lm", formula = y ~ poly(x, 12), se = FALSE, color = "red", linewidth = 1.2) +
+  theme_minimal() + labs(title = "Overfitting (Überanpassung)", subtitle = "Lernt Rauschen auswendig", x = "x", y = "y")
+
+p_good + p_over
+```
+
+Das rote Modell berührt fast jeden Punkt (hohes $R^2$). Aber was passiert, wenn wir einen neuen Datenpunkt bei $x = 8$ vorhersagen wollen? Das Modell würde völlig absurde Werte liefern. **Unser Ziel ist ein "sparsames" Modell**: So komplex wie nötig, aber so einfach wie möglich.
+:::
+
+---
+
+## Kennzahlen für die Modellauswahl
+
+Um Overfitting zu verhindern, brauchen wir Metriken, die das Modell "bestrafen", wenn unnötige Variablen hinzugefügt werden.
+
+### 1. Das Angepasste $R^2$ (Für Lineare Regression)
+
+Während das normale $R^2$ bei jedem neuen Prädiktor wächst, korrigiert das **Angepasste $R^2$ ($R^2_{adj}$)** diesen Wert nach unten, basierend auf der Anzahl der Variablen im Modell ($k$). 
+
+*   Fügen wir eine Variable hinzu, die das Modell stark verbessert, steigt das $R^2_{adj}$.
+*   Fügen wir eine nutzlose Variable hinzu, greift die mathematische Strafe, und das $R^2_{adj}$ **sinkt**.
+
+Bei der **Rückwärtsselektion (Backward Selection)** starten wir mit dem vollen Modell (alle Variablen) und entfernen schrittweise die Variablen, die das $R^2_{adj}$ nicht verbessern oder sogar verschlechtern.
+
+### 2. Das AIC (Für Logistische Regression)
+
+Bei der logistischen Regression (siehe Kapitel 4) existiert kein klassisches $R^2$. Stattdessen nutzen wir das **Akaike-Informationskriterium (AIC)**. 
+
+*   Auch das AIC bestraft Komplexität (Anzahl der Variablen).
+*   **Regel:** Im Gegensatz zum $R^2$ (wo höher besser ist), gilt beim AIC: **Je kleiner der AIC-Wert, desto besser das Modell.**
+
+```{r}
+#| echo: true
+#| eval: true
+# Beispiel für den AIC-Vergleich bei der Spam-Erkennung
+modell_spam_klein <- glm(spam ~ to_multiple, data = email, family = "binomial")
+modell_spam_gross <- glm(spam ~ to_multiple + cc + urgent_subj, data = email, family = "binomial")
+
+# glance() gibt uns die Metriken aus
+glance(modell_spam_klein) |> select(AIC, nobs)
+glance(modell_spam_gross) |> select(AIC, nobs)
+```
+Das größere Modell hat den kleineren AIC-Wert. Es ist trotz der Strafe für mehr Variablen das bessere Modell.
+
+---
+
+## Die ultimative Prüfung: Kreuzvalidierung (Cross-Validation)
+
+Das Angepasste $R^2$ und das AIC sind gute theoretische Hilfsmittel. Die harte Realität in der Data Science ist jedoch eine andere: **Wie gut ist mein Modell bei Daten, die es noch nie zuvor gesehen hat?**
+
+Die Lösung heißt **Kreuzvalidierung (CV)**. Anstatt das Modell auf allen Daten zu trainieren und zu testen (was Schummeln wäre), teilen wir die Daten auf:
+
+1.  **Trainingsdaten:** Ein Teil der Daten, auf dem wir die Modellparameter ($b_0, b_1, \dots$) schätzen.
+2.  **Testdaten (Holdout):** Ein anderer Teil, an dem wir prüfen, wie groß unsere Vorhersagefehler ($e = y - \hat{y}$) tatsächlich sind.
+
+### Workflow: $k$-fache Kreuzvalidierung
+Bei der $k$-fachen CV (z.B. $k=4$) teilen wir die Daten in 4 gleich große Blöcke ("Folds"). Wir trainieren das Modell auf 3 Blöcken und testen es am 4. Block. Das wiederholen wir 4-mal, sodass jeder Block genau einmal der Test-Block war.
+
+### Praxis-Beispiel: Pinguin-Körpermasse
+Wir wollen die Masse von Pinguinen (`body_mass_g`) vorhersagen. 
+*   **Modell A (Klein):** Nutzt nur die Schnabellänge (`bill_length_mm`).
+*   **Modell B (Groß):** Nutzt Schnabellänge, Schnabeltiefe, Flossenlänge, Geschlecht und Spezies.
+
+Welches Modell liefert in der Realität die besseren Vorhersagen? Wir programmieren einen 4-fachen CV-Workflow für Modell B:
+
+```{r}
+#| echo: true
+#| eval: true
+set.seed(47)
+
+# 1. Daten in 4 Folds aufteilen (erzeugt eine Liste mit Zeilen-Indizes für jeden Fold)
+folds <- createFolds(penguins$body_mass_g, k = 4)
+
+# 2. Leeren Container für unsere Ergebnisse vorbereiten
+cv_ergebnisse <- data.frame()
+
+# 3. Der CV-Loop: Für jeden der 4 Folds einmal durchlaufen
+for(i in 1:4) {
+  test_indizes <- folds[[i]]
+  
+  # Daten aufteilen
+  test_daten  <- penguins[test_indizes, ]
+  train_daten <- penguins[-test_indizes, ] # Minus bedeutet: Alles AUßER test_indizes
+  
+  # Modell NUR auf den Trainingsdaten anpassen
+  modell_cv <- lm(body_mass_g ~ bill_length_mm + bill_depth_mm + flipper_length_mm + sex + species, 
+                  data = train_daten)
+  
+  # Vorhersage für die unabhängigen Testdaten machen
+  vorhersage <- predict(modell_cv, newdata = test_daten)
+  
+  # Ergebnisse speichern
+  fold_ergebnis <- data.frame(
+    Fold = paste("Fold", i),
+    Beobachtet = test_daten$body_mass_g,
+    Vorhergesagt = vorhersage,
+    Fehler = test_daten$body_mass_g - vorhersage
+  )
+  cv_ergebnisse <- bind_rows(cv_ergebnisse, fold_ergebnis)
+}
+
+# 4. Den Gesamtfehler berechnen (Kreuzvalidierte Summe der Fehlerquadrate - CV SSE)
+cv_sse_gross <- sum(cv_ergebnisse$Fehler^2)
+```
+
+Würden wir diesen Code für **Modell A** (nur Schnabellänge) ausführen, erhielten wir einen Gesamtfehler (CV SSE) von ca. **141.552.000**.
+Der Gesamtfehler für unser **Modell B** (aus dem Code oben) beträgt hingegen nur ca. **27.728.000**. 
+
+Der Vorhersagefehler ist massiv geschrumpft! Das größere Modell ist hier eindeutig überlegen und leidet nicht unter Overfitting.
+
+::: {.callout-tip icon="false"}
+## Visuelle Intuition: Die Vorhersagefehler der Kreuzvalidierung
+
+Wir können uns die Fehler (`Fehler = Beobachtet - Vorhergesagt`) für unsere 4 Test-Folds aus Modell B grafisch ansehen.
+
+```{r}
+#| echo: false
+#| fig-height: 5
+#| fig-cap: "Die Vorhersagefehler in den 4 Test-Durchläufen (Folds) von Modell B. Nahezu alle Vorhersagen liegen innerhalb eines Fensters von $\\pm 500$ Gramm."
+ggplot(cv_ergebnisse, aes(x = Vorhergesagt, y = Fehler)) +
+  geom_point(alpha = 0.5, color = "darkblue") +
+  geom_hline(yintercept = 0, color = "black", linewidth = 1) +
+  geom_hline(yintercept = c(-500, 500), linetype = "dashed", color = "red") +
+  facet_wrap(~Fold) +
+  theme_minimal() +
+  labs(
+    title = "Out-of-Sample Vorhersagefehler (Modell B)",
+    x = "Vorhergesagte Körpermasse (g)",
+    y = "Vorhersagefehler (g)"
+  )
+```
+
+Die Grafik zeigt, dass das Modell extrem stabil ist: Egal welcher Fold gerade der Test-Datensatz war, die Fehler streuen verlässlich gleichmäßig um die Nulllinie. Hätten wir Modell A geplottet, würden die Punkte weit über die roten $\pm 500g$-Linien hinaus in den Bereich von über $\pm 1000g$ streuen.
+:::
+
+::: {.callout-note icon="false"}
+## Der Brückenschlag: Sie betreiben bereits Machine Learning!
+
+Vielleicht ist Ihnen das Wort „Machine Learning“ (Maschinelles Lernen) in den Medien oder anderen Kursen schon begegnet. Die gute Nachricht ist: Mit dem Verständnis der Kreuzvalidierung haben Sie gerade das fundamentale Kernprinzip des modernen Machine Learnings (ML) gemeistert.
+
+Im Kern macht ein hochentwickelter ML-Algorithmus bei Spotify, Netflix oder in der Kreditrisikoprüfung nichts anderes als das, was Sie in diesem Kapitel programmiert haben:
+
+1. **Training Phase:** Der Algorithmus sucht in historischen Daten nach Mustern (exakt wie R die Koeffizienten $b_i$ im OLS-Modell schätzt).
+2. **Testing Phase:** Das gelernte Modell muss sich an völlig neuen, isolierten Daten beweisen (Out-of-Sample), um zu zeigen, ob es echte Zusammenhänge verstanden oder nur Rauschen auswendig gelernt hat (Overfitting).
+
+Ein lineares oder logistisches Regressionsmodell, das mittels Kreuzvalidierung auf seine Vorhersagekraft geprüft wird, ist die solide Basis fast jeder professionellen Machine-Learning-Pipeline. Sie haben soeben den Schritt von der reinen Datenbeschreibung (Deskription) zur echten prädiktiven Analytik (Predictive Analytics) vollzogen.
+:::
+
+## Fazit: Die Strategie eines Data Scientists
+
+Modellbildung ist keine Einbahnstraße. Ein professioneller Workflow sieht so aus:
+
+1.  **Fundament:** Starten Sie mit der Fachlogik (Welche Variablen ergeben theoretisch Sinn?).
+2.  **Filterung:** Werfen Sie Variablen raus, die das Angepasste $R^2$ verschlechtern oder den AIC in die Höhe treiben.
+3.  **Realitätscheck:** Nutzen Sie Kreuzvalidierung, um die endgültige Vorhersagekraft (bei numerischen Zielen den *CV SSE*, bei logistischen Zielen die *Accuracy*) zu messen und Ihr Modell vor der Praxis zu schützen.

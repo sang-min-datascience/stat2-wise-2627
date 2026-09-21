@@ -1,0 +1,40 @@
+# Vorwort {.unnumbered}
+
+Willkommen zum Skript für das Modul **Statistik 2: Inferenz und Modellierung**.
+
+Dieses Skript begleitet Sie durch den Kurs und verbindet die statistische Theorie direkt mit der praktischen Anwendung in R.
+
+Die Schwerpunkte dieses Skripts liegen auf:
+
+- Dem Verständnis von Stichprobenverteilungen und Konfidenzintervallen.
+- Der sicheren Auswahl und Anwendung von Hypothesentests (Anteile und Mittelwerte).
+- Der Modellierung komplexer Zusammenhänge mittels linearer und logistischer Regression.
+
+*Nutzen Sie das Inhaltsverzeichnis auf der linken Seite, um durch die einzelnen Kapitel zu navigieren.*
+
+*Nutzen Sie die Links auf der rechten Seite, um innerhalb eines Kapitels zu navigieren.*
+
+Der öffentliche Link zu diesem Skript ist: <https://019f2d55-5e33-9022-b065-c4581443be0d.share.connect.posit.cloud/>
+
+Eine PDF Version dieses Skripts verteile ich auch über den Moodlekurs.
+
+## Entstehungsgeschichte dieses Skripts
+
+- Inhaltlich baut dieses Skript auf dem Open Source Lehrbuch "Introduction to Modern Statistics" von Mine Çetinkaya-Rundel and Johanna Hardin auf.
+- Sie finden es online unter <https://openintro-ims.netlify.app/>
+- Ich habe das Lehrbuch auszugsweise mit KI-Unterstützung ins Deutsche übersetzt und in mehreren Überarbeitungsschleifen angepasst.
+- Wenn Sie neben dem eher technischen Zugang dieses Kurses auch nicht-technische Darstellungen lesen möchten, empfehle ich zwei Bücher:
+  - "Naked Statistics" von Charles Wheelan,
+  - "The Art of Statistics" von David Spiegelhalter.
+
+## Über den Einsatz von KI in diesem Kurs: Von taktischer zu strategischer Programmierung
+
+Wenn Sie Statistik und Datenanalyse lernen, stehen Sie vor zwei völlig unterschiedlichen Herausforderungen:
+
+1.  Taktische Programmierung (Die Handwerksarbeit): Wie lautet der exakte R-Befehl? Wo fehlt ein Komma? Warum wirft R die Fehlermeldung "object not found"?
+
+2.  Strategische Programmierung (Die Denk-Arbeit): Welches statistische Modell beantwortet unsere Forschungsfrage? Sind die Annahmen des Modells erfüllt? Wie übersetzen wir den p-Wert in eine Handlungsempfehlung für das Management?
+
+In der Vergangenheit verbrachten Studierende (und Analysten) 80 % ihrer Zeit mit taktischen Problemen und Frust-Googeln. Das ist größtenteils vorbei.
+
+In diesem Kurs ist der Einsatz von KI (wie ChatGPT oder GitHub Copilot) als taktischer Assistent ausdrücklich erlaubt und erwünscht. Die KI ist Ihre Flotte von Junior-Entwicklern, die den Code für Sie tippt und Fehler sucht. Ihr Job auf dem Arbeitsmarkt der Zukunft ist es nicht, ein menschliches Syntax-Lexikon zu sein. Ihr Job ist das strategische Review: Sie geben der KI die Architektur vor, Sie kontrollieren die Annahmen, und Sie verantworten die Interpretation. Wer blind kopiert, wird scheitern. Wer die KI strategisch steuert, wird exzellente Analysen produzieren.

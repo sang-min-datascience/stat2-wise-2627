@@ -1,0 +1,132 @@
+
+# Fragebogendaten und Latente Konstrukte
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+# Setup-Chunk für dieses Kapitel
+library(dplyr)
+library(ggplot2)
+library(broom)
+library(psych) # Das Standard-Paket für Fragebogendaten und Faktoranalyse
+
+# Wir nutzen einen klassischen Fragebogen-Datensatz: 
+# 25 Persönlichkeitsfragen (Big Five) von 2800 Probanden.
+data(bfi)
+fragebogen_daten <- bfi |> select(A1:O5) |> na.omit()
+```
+
+::: {.callout-note appearance="simple"}
+## Kompetenzziele für dieses Kapitel
+Nach der Bearbeitung dieses Kapitels können Sie:
+
+1. **Supervised vs. Unsupervised Learning:** Den Unterschied zwischen prädiktiver Modellierung (Regression) und strukturentdeckenden Verfahren erkennen.
+2. **Latente Konstrukte verstehen:** Das Konzept hinter unbeobachtbaren Variablen (z. B. "Zufriedenheit", "Stress") und deren Messung durch manifeste Fragebogen-Items erklären.
+3. **Dimensionsreduktion anwenden:** Eine Explorative Faktoranalyse (EFA) in R durchführen, Scree-Plots interpretieren und Faktorwerte (Scores) berechnen, um diese als saubere Prädiktoren in Regressionsmodellen zu nutzen.
+:::
+
+In den Kapiteln 3 bis 5 haben wir uns intensiv mit der **Regression** beschäftigt. Wir hatten immer eine klare, bekannte Zielvariable $y$ (z. B. Körpermasse, Zinssatz, Rückruf-Status), die wir durch Prädiktoren $x$ vorhersagen wollten. 
+
+In der modernen Data Science nennt man diesen Ansatz **Supervised Learning (Überwachtes Lernen)**: Das Modell wird anhand von konkreten "Lösungen" (den beobachteten $y$-Werten) trainiert und korrigiert seine Fehler.
+
+## Der Paradigmenwechsel: Unsupervised Learning
+
+Oft stehen wir in der empirischen Forschung (insbesondere bei Umfragen und Fragebögen) vor einem völlig anderen Problem: Wir haben gar kein konkretes $y$, das wir vorhersagen wollen. Stattdessen haben wir einen riesigen Datensatz an $x$-Variablen und wollen wissen: **Gibt es hier verborgene Muster oder Strukturen?**
+
+Dieser Ansatz heißt **Unsupervised Learning (Unüberwachtes Lernen)**. Wir geben dem Algorithmus keine Lösungen vor, sondern lassen ihn die Daten selbstständig ordnen. Eines der wichtigsten Verfahren dafür ist die **Dimensionsreduktion** – und im Kontext von Fragebögen speziell die **Faktoranalyse**.
+
+### Das Praxis-Problem: Multikollinearität im Fragebogen
+
+Stellen Sie sich vor, Sie werten eine Mitarbeiterumfrage aus. Sie haben 15 Fragen auf einer 5-stufigen Likert-Skala gestellt, die alle grob in Richtung "Arbeitszufriedenheit" gehen (z.B. "Ich mag mein Team", "Mein Chef kommuniziert gut", "Die Kaffeemaschine funktioniert").
+
+Wenn Sie nun versuchen, die Produktivität ($y$) der Mitarbeiter durch diese 15 Fragen ($x_1$ bis $x_{15}$) in einem multiplen Regressionsmodell (`lm`) vorherzusagen, tappen Sie in eine massive Falle: **Multikollinearität** (siehe Kapitel 3). 
+Wer bei "Ich mag mein Team" eine 5 ankreuzt, kreuzt oft auch bei "Gutes Arbeitsklima" eine 5 an. Die Variablen korrelieren so stark untereinander, dass die OLS-Mathematik zusammenbricht und die marginalen Effekte der einzelnen Fragen uninterpretierbar werden.
+
+### Die Lösung: Latente Konstrukte
+
+Anstatt 15 hochkorrelierte Fragen ins Modell zu zwingen, drehen wir die Logik um: Wir gehen davon aus, dass es ein unsichtbares, **latentes Konstrukt** (die wahre, innere "Arbeitszufriedenheit") gibt. Dieses Konstrukt können wir nicht direkt messen. Wir können nur die 15 beobachtbaren Reaktionen (die **manifesten Variablen**) messen, die durch dieses Konstrukt verursacht werden.
+
+Die **Explorative Faktoranalyse (EFA)** sucht nach genau diesen verborgenen latenten Variablen (den "Faktoren"). Sie fasst hochkorrelierte Einzelfragen zu wenigen, unkorrelierten Über-Dimensionen zusammen. Aus 15 Fragen wird so vielleicht ein einziger "Zufriedenheits-Score", den wir danach sauber und gefahrlos in unser Regressionsmodell einbauen können.
+
+---
+
+## Durchführung einer Faktoranalyse in R
+
+Wir nutzen den `bfi`-Datensatz aus dem `psych`-Paket. Er enthält die Antworten von über 2.000 Personen auf 25 Fragen zu ihrer Persönlichkeit. Wir wollen prüfen, ob sich diese 25 Einzelfragen auf zugrundeliegende Persönlichkeits-Faktoren (Dimensionen) reduzieren lassen.
+
+### Schritt 1: Wie viele Faktoren gibt es? (Der Scree-Plot)
+
+Bevor wir Faktoren extrahieren, müssen wir entscheiden, *wie viele* Faktoren mathematisch sinnvoll sind. Jede Frage ist eine Dimension. Wir haben 25 Dimensionen. Ein Faktor ist nur dann nützlich, wenn er wesentlich mehr Information (Varianz) bündelt als eine einzelne, isolierte Frage.
+
+Das Standard-Werkzeug dafür ist der **Scree-Plot** in Kombination mit der **Parallelanalyse**.
+
+```{r}
+#| echo: true
+#| eval: true
+#| fig-height: 5
+#| fig-cap: "Der Scree-Plot mit Parallelanalyse. Wir suchen den Punkt, an dem die blauen Dreiecke (echte Daten) unter die rote Linie (Zufallsdaten) fallen."
+fa.parallel(fragebogen_daten, fa = "fa", fm = "minres", main = "Scree-Plot und Parallelanalyse")
+```
+
+**Wie Sie diesen Plot lesen:**
+
+* Die Y-Achse (Eigenwerte) zeigt, wie viel "Informationskraft" ein Faktor hat. Ein Wert von über 1 bedeutet: Dieser Faktor bündelt mehr Information als eine einzelne Frage.
+* Die **blaue Linie** zeigt unsere tatsächlichen Faktoren.
+* Die **rote, gestrichelte Linie** zeigt, wie die Faktoren aussehen würden, wenn unsere Daten reiner Zufall (ohne jedes Muster) wären.
+* **Die Entscheidungsregel:** Wir behalten nur die Faktoren, deren blaue Dreiecke *über* der roten Zufallslinie (und idealerweise über 1.0) liegen. 
+
+Das Diagramm ist eindeutig: Nach dem 5. Faktor flacht die Kurve massiv ab (der "Geröll"-Knick, englisch *scree*). Es gibt **5 latente Konstrukte** in diesen 25 Fragen. (Psychologen erkennen hier sofort die "Big Five" der Persönlichkeitsforschung wieder).
+
+### Schritt 2: Die Faktoren extrahieren (Faktorladungen)
+
+Nachdem wir wissen, dass wir 5 Faktoren suchen, lassen wir R berechnen, welche der 25 Fragen zu welchem dieser 5 Faktoren gehören. 
+
+*(Hinweis: Wir nutzen hier eine "oblique" Rotation, `rotate = "oblimin"`. Das erlaubt den Faktoren, untereinander leicht zu korrelieren – was in der psychologischen und wirtschaftlichen Realität fast immer der Fall ist).*
+
+```{r}
+#| echo: true
+#| eval: true
+# Führe die Faktoranalyse mit 5 Faktoren durch
+modell_efa <- fa(fragebogen_daten, nfactors = 5, rotate = "oblimin", fm = "minres")
+
+# Zeige die Zuordnung (Ladungen) an. Zur besseren Lesbarkeit blenden wir 
+# schwache Ladungen (unter 0.3) aus.
+print(modell_efa$loadings, cutoff = 0.3, sort = TRUE)
+```
+
+**Wie Sie diese Matrix lesen:**
+
+* In den Spalten sehen Sie unsere 5 verborgenen Faktoren (`MR2`, `MR1`, `MR3`, `MR5`, `MR4`).
+* In den Zeilen stehen unsere 25 Fragen (z.B. N1 bis N5).
+* Die Zahlen sind die **Faktorladungen** (grob vergleichbar mit Korrelationskoeffizienten). Sie reichen von -1 bis +1. 
+* *Interpretation:* Die Fragen N1 bis N5 laden alle extrem hoch auf dem Faktor `MR2`. Sie messen also offensichtlich alle dasselbe latente Konstrukt (in der Psychologie: "Neurotizismus"). Die Fragen E1 bis E5 laden gemeinsam auf `MR1` ("Extraversion"). 
+
+Wir haben das Chaos von 25 Einzelvariablen erfolgreich auf 5 klare, inhaltlich interpretierbare Dimensionen reduziert!
+
+### Schritt 3: Faktor-Scores für die Regression berechnen
+
+Das ist der entscheidende Moment, der Unsupervised Learning wieder mit Supervised Learning (Kapitel 3) verbindet. 
+
+Anstatt nun 25 wackelige Fragen in unser nächstes Regressionsmodell zu werfen, können wir R anweisen, für jeden Probanden aus den Fragen seine 5 neuen **Faktor-Scores** zu berechnen. 
+
+```{r}
+#| echo: true
+#| eval: true
+# Extrahieren der berechneten Scores für jede Person
+faktoren_scores <- as.data.frame(modell_efa$scores)
+
+# Wir schauen uns die ersten 5 Probanden an:
+head(faktoren_scores)
+```
+
+**Was haben wir erreicht?**
+Wir haben jetzt einen stark komprimierten, bereinigten Datensatz. Wenn wir nun z.B. untersuchen wollen, wie sich die Persönlichkeit auf das Gehalt ($y$) auswirkt, nutzen wir nicht mehr die 25 unübersichtlichen und kollinearen Einzelfragen. Wir nehmen einfach diese 5 neuen Variablen (`MR1` bis `MR5`) und stecken sie in eine klassische multiple OLS-Regression (`lm(gehalt ~ MR1 + MR2 + ...)`).
+
+## Zusammenfassung: Die Daten-Pipeline
+
+Die Faktoranalyse ist kein Selbstzweck, sondern oft der erste, entscheidende Schritt einer professionellen Daten-Pipeline bei Befragungen:
+
+1. **Unsupervised Step (EFA):** Reduzieren Sie viele, unübersichtliche und hochkorrelierte Items aus dem Fragebogen auf wenige, aussagekräftige Faktoren (latente Konstrukte).
+2. **Scoring:** Berechnen Sie für jede Beobachtung die Werte auf diesen neuen Faktoren.
+3. **Supervised Step (OLS/Logit):** Nutzen Sie diese sauberen Faktor-Scores als Prädiktoren in Ihren Regressionsmodellen, um Zielvariablen vorhersagen, ohne in die Multikollinearitäts-Falle zu tappen.

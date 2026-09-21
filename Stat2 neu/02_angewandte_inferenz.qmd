@@ -1,0 +1,237 @@
+
+# Angewandte Inferenz
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+# Unsichtbarer Setup-Chunk für dieses Kapitel
+library(openintro)
+library(dplyr)
+
+# Vorbereitung des Datensatzes für den Ein-Stichproben-Test
+set.seed(42)
+run17_sample_100 <- run17 |> 
+  filter(event == "10 Mile") |> 
+  sample_n(100) |> 
+  mutate(time = net_sec / 60)
+```
+
+::: {.callout-note appearance="simple"}
+## Kompetenzziele für dieses Kapitel
+
+Nach der Bearbeitung dieses Kapitels können Sie:
+
+1.  **Methodenauswahl:** Für ein gegebenes Datenproblem zielsicher entscheiden, welches Inferenzverfahren (Ein-/Zwei-Stichproben-Anteile, unabhängige oder gepaarte Mittelwerte) mathematisch korrekt ist.
+2.  **Voraussetzungsprüfung (Diagnostik):** Die technischen Bedingungen (Unabhängigkeit, Erfolgs-Misserfolgs-Bedingung, Normalität/Ausreißer) für das jeweilige Verfahren anhand der Daten überprüfen, *bevor* Software eingesetzt wird.
+3.  **Software-Kompetenz:** Die R-Funktionen `prop.test()` und `t.test()` korrekt parametrisieren und deren Output (p-Wert, Konfidenzintervall) im praktischen Kontext präzise interpretieren.
+:::
+
+Dieses Kapitel bezieht sich auf Kapitel 16 und 17 aus dem Lehrbuch "Introduction to modern statistics" [@çetinkaya-rundel2024].
+
+Während wir im vorangegangenen Kapitel den theoretischen Kern der statistischen Inferenz kennengelernt haben, geht es nun um die operative Anwendung in R.
+
+## Das universelle Prinzip: Die Anatomie der Teststatistik
+
+Egal ob wir Anteile oder Mittelwerte, eine Gruppe oder zwei Gruppen testen – die Inferenz folgt unter der Haube immer der exakt gleichen konzeptionellen Logik. Wir berechnen eine Teststatistik (wie $Z$ oder $T$), die uns sagt, wie ungewöhnlich unsere Daten unter der Nullhypothese sind.
+
+Diese Statistik ist immer ein Verhältnis aus **Signal** und **Rauschen**:
+
+$$ \text{Teststatistik} = \frac{\text{Signal}}{\text{Rauschen}} = \frac{\text{Beobachtete Schätzung} - \text{Nullwert}}{\text{Standardfehler (SE)}} $$
+
+- **Das Signal (Zähler):** Wie stark weicht das, was wir in unseren Daten gemessen haben, von dem ab, was die Nullhypothese behauptet?
+- **Das Rauschen (Nenner):** Wie viel zufällige Schwankung (Standardfehler) erwarten wir allein durch das Ziehen von Stichproben? *Denken Sie daran: Da* $n$ in der Berechnung des SE stets im Nenner steht, sinkt das Rauschen bei größeren Stichproben massiv.
+
+Je größer unser Signal im Verhältnis zum Rauschen ist, desto extremer wird unsere Teststatistik und desto kleiner wird der resultierende **p-Wert**. Anstatt diese Standardfehler ab jetzt manuell zu berechnen, überlassen wir die Bruchrechnung R und konzentrieren uns auf das, was Software nicht kann: Die Prüfung der Voraussetzungen und die Interpretation.
+
+------------------------------------------------------------------------
+
+## Inferenz für Anteile (Proportionen)
+
+Wir konzentrieren uns zunächst auf kategoriale Daten (Erfolg vs. Misserfolg).
+
+### Voraussetzungen für Proportionen
+
+Damit die Inferenz (die auf der Normalverteilung basiert) gültig ist, müssen R-Outputs nur interpretiert werden, wenn zwei harte Bedingungen erfüllt sind: 1. **Unabhängigkeit:** Die Beobachtungen stammen aus einer Zufallsstichprobe oder einem randomisierten Experiment. 2. **Erfolgs-Misserfolgs-Bedingung:** Die Stichprobe ist groß genug. Wir erwarten mindestens 10 Erfolge und 10 Misserfolge. (Beim Testen zweier Gruppen gilt dies für *beide* Gruppen separat).
+
+### Operative Umsetzung in R (`prop.test`)
+
+#### Ein einzelner Anteil ($p$)
+
+Angenommen, eine Umfrage unter 826 Kreditnehmern ergab, dass 578 (ca. 70 %) neue Vorschriften befürworten. Wir wollen testen, ob die Mehrheit ($p > 0.5$) zustimmt.
+
+```{r}
+#| echo: true
+#| eval: true
+# Teste, ob der Anteil signifikant von 0.5 abweicht
+prop.test(x = 578, n = 826, p = 0.5, conf.level = 0.95)
+```
+
+R liefert uns direkt den p-Wert und das 95%-Konfidenzintervall. Ist der p-Wert klein ($< 0,05$), verwerfen wir die Nullhypothese.
+
+#### Vergleich zweier Anteile ($p_1 - p_2$)
+
+::: {.callout-tip icon="false"}
+## Visuelle Intuition vs. Statistischer Test
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-height: 3.5
+#| fig-cap: "Täuschend ähnlich: Reicht der sichtbare Unterschied aus, um systematisch zu sein?"
+library(ggplot2)
+library(dplyr)
+
+df_stent <- data.frame(
+  Gruppe = c("Behandlung (Stent)", "Kontrolle (Kein Stent)"),
+  Rate = c(14/40, 11/50)
+)
+
+ggplot(df_stent, aes(x = Gruppe, y = Rate, fill = Gruppe)) +
+  geom_col(width = 0.5, show.legend = FALSE) +
+  scale_fill_manual(values = c("Behandlung (Stent)" = "#F25C3E", "Kontrolle (Kein Stent)" = "#5D9BBE")) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+  theme_minimal() +
+  labs(
+    x = NULL, 
+    y = "Anteil mit Schlaganfall"
+  )
+```
+Was sagt uns das Auge? Die Balken (35 % vs. 22 %) sehen im Diagramm unterschiedlich aus. Die Intuition flüstert uns einen klaren Effekt zu. Ob dieser Unterschied jedoch ausreicht, um bei kleinen Fallzahlen ($n=40$ und $n=50$) nicht nur Zufall zu sein, klärt erst der Hypothesentest.
+:::
+
+In einem medizinischen Experiment (Stents) vergleichen wir eine Behandlungsgruppe mit einer Kontrollgruppe. Wir übergeben R einfach die Vektoren der "Erfolge" und der Gruppengrößen:
+
+```{r}
+#| echo: true
+#| eval: true
+# x: Vektor der Erfolge (z.B. Überlebende)
+# n: Vektor der Gruppengrößen
+prop.test(x = c(14, 11), n = c(40, 50), conf.level = 0.90)
+```
+
+**Interpretation:** Wenn das von R ausgegebene Konfidenzintervall für die *Differenz* die Null einschließt, haben wir keine ausreichende Evidenz für einen Unterschied zwischen den Gruppen. R verwendet hier intern automatisch den "gepoolten Anteil", um das Rauschen unter der Nullhypothese korrekt abzuschätzen.
+
+------------------------------------------------------------------------
+
+## Inferenz für Mittelwerte
+
+Wir wechseln von kategorialen zu numerischen Daten. Die entscheidende Änderung: Wenn wir Mittelwerte ($\mu$) analysieren, müssen wir die wahre Standardabweichung der Grundgesamtheit durch die Standardabweichung der Stichprobe ($s$) schätzen. Diese zusätzliche Unsicherheit zwingt uns, das Normalmodell zu verlassen und zur **t-Verteilung** zu wechseln.
+
+### Bedingungen für Mittelwerte (Das "LUNG"-Konzept)
+
+R warnt Sie nicht, wenn Sie ungeeignete Daten in einen t-Test werfen. Sie müssen vorab prüfen:
+
+1.  **Unabhängigkeit:** Zufällige Ziehung / Zuweisung.
+2.  **Normalität / Ausreißer:**
+    - **Kleines** $n$ ($< 30$): Daten dürfen keine eindeutigen Ausreißer oder extreme Schiefe haben (Histogramm prüfen!).
+    - **Großes** $n$ ($\ge 30$): Durch den Zentralen Grenzwertsatz ist leichte Schiefe tolerierbar, es dürfen aber keine *extremen* Ausreißer existieren.
+
+### Operative Umsetzung in R (`t.test`)
+
+R erledigt die Berechnung der t-Statistik und der korrekten Freiheitsgrade ($df$) automatisch für uns.
+
+#### Ein einzelner Mittelwert ($\mu$)
+Wir wollen testen, ob die durchschnittliche Laufzeit bei einem Rennen signifikant vom historischen Nullwert (93,29 Minuten) abweicht:
+
+```{r}
+#| echo: true
+#| eval: true
+t.test(run17_sample_100$time, mu = 93.29, conf.level = 0.95)
+```
+
+**Wie Sie diesen Output lesen:**
+
+* **`sample estimates (mean of x)`**: Unsere Stichprobe von 100 Läufern brauchte im Durchschnitt knapp 98,38 Minuten.
+* **`p-value = 0.005354`**: Dieser Wert ist deutlich kleiner als das Signifikanzniveau von 0,05. Wir verwerfen die Nullhypothese. Die durchschnittliche Laufzeit weicht statistisch signifikant vom historischen Wert (93,29 Minuten) ab.
+* **`95 percent confidence interval`**: Die wahre durchschnittliche Laufzeit aller Teilnehmer liegt mit 95%iger Sicherheit zwischen ca. 94,83 und 101,92 Minuten. Da der historische Wert (93,29) *nicht* in diesem Intervall liegt, bestätigt dies unser signifikantes Testergebnis.
+
+
+#### Vergleich zweier unabhängiger Mittelwerte ($\mu_1 - \mu_2$)
+
+::: {.callout-tip icon="false"}
+## Visuelle Intuition vs. Statistischer Test
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+#| fig-height: 4
+#| fig-cap: "Die roten Punkte markieren die Mittelwerte. Das Signal muss sich gegen das Rauschen (Überschneidung der Boxen) durchsetzen."
+ggplot(births14 |> filter(!is.na(habit)), aes(x = habit, y = weight, fill = habit)) +
+  geom_boxplot(alpha = 0.6, show.legend = FALSE, outlier.color = "grey50") +
+  stat_summary(fun = mean, geom = "point", shape = 20, size = 5, color = "darkred") +
+  scale_fill_manual(values = c("nonsmoker" = "#5D9BBE", "smoker" = "#F25C3E")) +
+  theme_minimal() +
+  labs(
+    x = "Rauchgewohnheit", 
+    y = "Gewicht (Pfund)"
+  )
+``` 
+
+Was sagt uns das Auge? Die Boxen überschneiden sich fast vollständig (massives Rauschen), die Mittelwerte (rote Punkte) scheinen sehr nah beieinander zu liegen. Die Intuition vermutet hier eher keinen Unterschied. Weil wir aber eine große Stichprobe ($n=1000$) haben, ist das tatsächliche statistische Rauschen (der Standardfehler) winzig. Der folgende t-Test wird zeigen, wie stark uns das Auge hier täuscht.
+:::
+  
+Wir vergleichen das Geburtsgewicht von Babys bei rauchenden (`smoker`) vs. nicht-rauchenden (`nonsmoker`) Müttern. Die Mütter sind voneinander unabhängig.
+
+```{r}
+#| echo: true
+#| eval: true
+# Die Tilde (~) bedeutet: "Modelliere Gewicht in Abhängigkeit von Rauchgewohnheit"
+t.test(weight ~ habit, data = births14)
+```
+
+**Wie Sie diesen Output lesen:**
+
+* **`Welch Two Sample t-test`**: R verwendet standardmäßig den Welch-t-Test. Dieser ist robust, falls die Varianzen (Streuungen) in beiden Gruppen unterschiedlich groß sind.
+* **`sample estimates`**: Babys von Nichtraucherinnen wogen in dieser Stichprobe im Schnitt 7,27 Pfund, die von Raucherinnen 6,68 Pfund.
+* **`p-value = 0.0002075`**: Ein extrem kleiner Wert ($< 0,05$). Der Unterschied im Geburtsgewicht ist statistisch hochsignifikant und kann sehr unwahrscheinlich durch bloßen Zufall beim Ziehen der Stichprobe erklärt werden.
+* **`95 percent confidence interval`**: Babys von Nichtraucherinnen sind im Durchschnitt zwischen ca. 0,29 und 0,90 Pfund schwerer. Das Intervall schließt die Null nicht ein, was unsere Entscheidung, die Nullhypothese zu verwerfen, bestätigt.
+
+
+#### Vergleich gepaarter Mittelwerte ($\mu_{diff}$)
+Sind die Datenstrukturen **abhängig** (z.B. Buchpreise in der UCLA-Buchhandlung vs. Amazon für *exakt dasselbe* Buch), verdeckt die enorme Preisvarianz zwischen unterschiedlichen Büchern den eigentlichen Preisunterschied zwischen den Händlern. Ein unabhängiger Test ist hier mathematisch falsch.
+
+Wir müssen R mitteilen, dass die Daten gepaart sind (`paired = TRUE`). R berechnet dann intern die Differenz für jedes Paar und führt einen Ein-Stichproben-Test auf diese Preisdifferenzen durch.
+
+```{r}
+#| echo: true
+#| eval: true
+t.test(ucla_textbooks_f18$bookstore_new, 
+       ucla_textbooks_f18$amazon_new, 
+       paired = TRUE)
+```
+
+**Wie Sie diesen Output lesen:**
+
+* **`mean difference`**: Im Durchschnitt waren die Bücher in der UCLA-Buchhandlung in dieser Stichprobe um 3,58 Dollar teurer als exakt dieselben Bücher bei Amazon.
+* **`p-value = 0.03117`**: Da dieser Wert kleiner als 0,05 ist, ist der Preisunterschied statistisch signifikant. Wir verwerfen die Nullhypothese, dass es im Schnitt keinen Preisunterschied gibt.
+* **`95 percent confidence interval`**: Die wahre, durchschnittliche Preisdifferenz für alle Lehrbücher liegt mit 95%iger Sicherheit zwischen 0,33 und 6,83 Dollar. Da das gesamte Intervall im positiven Bereich liegt (größer als 0), können wir sehr sicher sein, dass die UCLA-Buchhandlung systematisch teurer ist.
+
+::: {.callout-note icon="false"}
+## Exkurs aus der Praxis: Sie können jetzt A/B-Testing!
+
+Wenn Sie die statistischen Tests für zwei Anteile (`prop.test`) oder zwei Mittelwerte (`t.test`) verstanden haben, beherrschen Sie bereits eines der wichtigsten Werkzeuge der modernen Wirtschaft: das **A/B-Testing**.
+
+Technologieunternehmen, E-Commerce-Plattformen und Marketing-Agenturen nutzen diese Tests täglich, um datengetriebene Entscheidungen zu treffen:
+
+* **Beispiel Anteile (Conversion Rate):** Führt ein roter "Jetzt Kaufen"-Button (Variante B) zu einer signifikant höheren Klickrate als der bisherige blaue Button (Variante A)? Das ist unter der Haube exakt unser `prop.test`.
+* **Beispiel Mittelwerte (User Engagement):** Verbringen Nutzer mit dem neuen Empfehlungs-Algorithmus (Variante B) signifikant mehr Minuten auf der Plattform als mit dem alten (Variante A)? Das berechnet exakt unser `t.test`.
+
+Die Mathematik bleibt identisch zu den Beispielen in diesem Kapitel. Lediglich das Vokabular ändert sich: Was wir "Stichprobe 1 und 2" nennen, heißt in der Industrie oft "Control Group" (A) und "Treatment Group" (B). Die statistische Inferenz ist das absolute Fundament, um Signale im Business-Kontext vom bloßen Zufallsrauschen zu trennen.
+:::
+
+## Zusammenfassung der Entscheidungsstrukturen
+
+Um das richtige Werkzeug auszuwählen, stellen Sie sich immer diese drei Fragen, bevor Sie Code schreiben:
+
+1.  **Art der Daten:**
+    - Ja/Nein-Frage (Erfolg/Misserfolg)? $\rightarrow$ **Anteile**. `prop.test()` nutzen.
+    - Messwerte (Gewicht, Zeit, Preis)? $\rightarrow$ **Mittelwerte**. `t.test()` nutzen.
+2.  **Anzahl der Gruppen:**
+    - Gegen einen fixen Wert testen? $\rightarrow$ Ein-Stichproben-Test.
+    - Zwei Gruppen vergleichen? $\rightarrow$ Handelt es sich um getrennte Individuen (unabhängig) oder um zusammenhängende Messungen (gepaart)?
+3.  **Voraussetzungen diagnostizieren:**
+    - Bei Proportionen: Die Erfolgs-/Misserfolgs-Regel ($np \ge 10$) berechnen.
+    - Bei Mittelwerten: Visuelle Diagnostik der Ausreißer via Histogramm/Boxplot vor dem Modellieren.

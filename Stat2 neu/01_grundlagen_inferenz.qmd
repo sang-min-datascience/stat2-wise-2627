@@ -1,0 +1,158 @@
+
+# Grundlagen der Inferenz mit Stichproben
+
+::: {.callout-note appearance="simple"}
+## Kompetenzziele für dieses Kapitel
+
+Nach der Bearbeitung dieses Kapitels können Sie:
+
+1.  **Konzept:** Erklären, warum Stichprobenstatistiken (wie der Mittelwert $\bar{x}$ oder Anteil $\hat{p}$) variieren und was eine *Stichprobenverteilung* ist.
+2.  **Theorie:** Den Zentralen Grenzwertsatz (ZGS) anwenden, um die Variabilität von Stichprobendaten theoretisch zu modellieren.
+3.  **Anwendung:** R-Funktionen (`pnorm`, `qnorm`) nutzen, um Wahrscheinlichkeiten und Perzentile unter der Normalverteilung zu berechnen, anstatt Formeln manuell aufzulösen.
+4.  **Synthese:** Ein 95%-Konfidenzintervall konstruieren und dessen Bedeutung für eine Grundgesamtheit statistisch korrekt interpretieren.
+:::
+
+Zu den wichtigsten Konzepten der Statistik gehört es, Schlussfolgerungen über eine Grundgesamtheit anhand von Informationen aus einer Stichprobe zu ziehen. Dieser Prozess wird als **statistische Inferenz** bezeichnet.
+
+Anstatt uns auf eine einzige Stichprobe zu verlassen und zu hoffen, dass diese "perfekt" ist, nutzen wir rechnerische Methoden und Wahrscheinlichkeitstheorie, um die inhärente *Variabilität* von Daten zu quantifizieren. In diesem Kapitel bauen wir das Fundament dafür: Wir untersuchen, wie sich Statistiken von Stichprobe zu Stichprobe verhalten, wenn wir den Prozess (theoretisch) unendlich oft wiederholen würden.
+
+## Die Stichprobenverteilung und der Zentrale Grenzwertsatz
+
+Eine Datenverteilung visualisiert die Variabilität der *beobachteten* Datenwerte aus einer einzigen Studie. Eine **Stichprobenverteilung** hingegen ist die Verteilung aller möglichen Werte einer *Stichprobenstatistik* (z. B. der Stichprobenanteil $\hat{p}$), wenn wir immer wieder neue Stichproben der gleichen Größe ziehen würden.
+
+Da wir in der Realität meist nur Zeit und Budget für *eine einzige* Studie haben, können wir die Stichprobenverteilung nicht direkt beobachten. Stattdessen nutzen wir Simulationen oder mathematische Modelle, um diese erwartete Variabilität zu schätzen.
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| fig-width: 10
+#| fig-height: 8
+#| fig-cap: "Simulierte Nullverteilungen für vier klassische Fallstudien."
+
+library(ggplot2)
+library(patchwork)
+library(tibble)
+
+# Simulation helper
+sim_null <- function(n, p, n_sim = 10000) {
+  replicate(n_sim, mean(rbinom(n, 1, p)))
+}
+
+# 1. Opportunity cost (p=0.5, n=100)
+d1 <- tibble(val = sim_null(100, 0.5), group = "Opportunity cost")
+
+# 2. Sex discrimination (p=0.5, n=50)
+d2 <- tibble(val = sim_null(50, 0.5), group = "Sex discrimination")
+
+# 3. Medical consultant (p=0.1, n=200)
+d3 <- tibble(val = sim_null(200, 0.1), group = "Medical consultant")
+
+# 4. Tappers + listeners (p=0.5, n=150)
+d4 <- tibble(val = sim_null(150, 0.5), group = "Tappers + listeners")
+
+all_data <- rbind(d1, d2, d3, d4)
+
+# Plotting function
+plot_dist <- function(data, title, fill_col) {
+  ggplot(data, aes(x = val)) +
+    geom_histogram(bins = 20, fill = fill_col, color = "white") +
+    theme_minimal() +
+    labs(title = title, x = NULL, y = NULL) +
+    theme(panel.grid.major.x = element_blank())
+}
+
+p1 <- plot_dist(d1, "Opportunity cost", "#5D9BBE")
+p2 <- plot_dist(d2, "Sex discrimination", "#154C5B")
+p3 <- plot_dist(d3, "Medical consultant", "#F25C3E")
+p4 <- plot_dist(d4, "Tappers + listeners", "#F2D43F")
+
+(p1 + p2) / (p3 + p4)
+```
+
+Wenn Sie die obigen Verteilungen betrachten, fällt auf: Obwohl sie aus völlig unterschiedlichen Kontexten stammen, sehen sie sich bemerkenswert ähnlich. Sie sind (größtenteils) symmetrisch und glockenförmig. Diese Ähnlichkeit ist kein Zufall.
+
+**Der Zentrale Grenzwertsatz (ZGS)** garantiert mathematisch, dass die Stichprobenverteilung von Proportionen oder Mittelwerten einer glockenförmigen Kurve – der *Normalverteilung* – folgt, sofern zwei Bedingungen erfüllt sind:
+
+1.  **Unabhängigkeit:** Die Beobachtungen in der Stichprobe sind unabhängig (z.B. durch zufällige Ziehung oder zufällige Zuweisung in Experimenten).
+2.  **Ausreichende Stichprobengröße:** Die Stichprobe darf nicht zu klein sein (die genauen Faustregeln hierfür behandeln wir in den anwendungsspezifischen Kapiteln).
+
+``` {r}
+#| echo: false
+#| warning: false
+#| message: false
+library(openintro)
+par(mar = c(0, 0, 0, 0))
+normTail(axes = FALSE)
+```
+
+## Arbeiten mit der Normalverteilung in R
+
+Da die Normalverteilung durch den ZGS das Rückgrat der Inferenz bildet, müssen wir sicher im Umgang mit ihr werden. Eine Normalverteilung wird durch genau zwei Parameter definiert: den **Mittelwert** ($\mu$), der das Zentrum bestimmt, und die **Standardabweichung** ($\sigma$), die die Streuung definiert: $N(\mu, \sigma)$.
+
+Anstatt mit unhandlichen Formeln zu hantieren, nutzen wir die Standardisierung. Der **Z-Wert** wandelt jeden beliebigen Wert in eine universelle Metrik um: *Wie viele Standardabweichungen liegt ein Wert über oder unter dem Mittelwert?*
+
+$$ Z = \frac{x-\mu}{\sigma} $$
+
+### Wahrscheinlichkeiten und Quantile ermitteln
+
+In der modernen Datenanalyse schlagen wir Z-Werte nicht mehr in gedruckten Tabellen nach. R bietet uns direkte, präzise Werkzeuge, um Perzentile (Flächen unter der Kurve) oder die dazugehörigen Cut-off-Werte (Quantile) zu berechnen.
+
+**Fall 1: Von einem Wert zur Wahrscheinlichkeit (`pnorm`)** Angenommen, SAT-Ergebnisse sind annähernd normalverteilt mit $N(\mu = 1500, \sigma = 300)$. Ein Testteilnehmer erzielt 1800 Punkte. In welchem Perzentil liegt er?
+
+Der Z-Wert ist $Z = \frac{1800 - 1500}{300} = 1$. Der Teilnehmer liegt exakt eine Standardabweichung über dem Schnitt. Mit R berechnen wir die Fläche *links* von diesem Wert:
+
+``` {r}
+#| echo: true
+# Wahrscheinlichkeit für Werte <= 1800 (bzw. Z <= 1)
+pnorm(1, mean = 0, sd = 1)
+```
+
+Das Ergebnis ist ca. 0,8413. Der Teilnehmer liegt also im 84. Perzentil.
+
+**Fall 2: Vom Perzentil zum Wert (`qnorm`)** Wie groß ist ein Mann, wenn er im 40. Perzentil liegt? Nehmen wir an, die Körpergröße ist $N(\mu = 70, \sigma = 3.3)$ Zoll. Hier suchen wir den *Quantil*-Wert (Cut-off):
+
+``` {r}
+#| echo: true
+# Wert auf der x-Achse für das 40. Perzentil
+qnorm(0.40, mean = 70, sd = 3.3)
+```
+
+Das Ergebnis (69,16 Zoll) liefert uns direkt den Wert, ohne dass wir die Z-Wert-Formel manuell nach $x$ auflösen müssen.
+
+## Von der Variabilität zum Konfidenzintervall
+
+Wenn wir verstanden haben, dass Punktschätzungen (wie ein Stichprobenanteil $\hat{p}$) variieren, müssen wir diese Variabilität quantifizieren. Das tun wir mit dem **Standardfehler (SE)** – er ist schlichtweg die Standardabweichung der *Stichprobenverteilung*.
+
+Da der ZGS uns sagt, dass diese Verteilung normal ist, können wir eine pragmatische Faustregel anwenden: In einer Normalverteilung liegen etwa 95 % aller Beobachtungen innerhalb von $\approx 1,96$ Standardabweichungen um den Mittelwert.
+
+Dieses Wissen erlaubt es uns, eine **Fehlermarge** ($1,96 \times SE$) um unsere Punktschätzung zu legen, um ein **95%-Konfidenzintervall** zu konstruieren:
+
+$$\text{Punktschätzung} \pm 1,96 \times SE$$
+
+### Fallstudie: Stents und Schlaganfallrisiko
+
+In einem Experiment mit 451 Patienten wurde untersucht, ob die Implantation eines Stents das Schlaganfallrisiko reduziert. Die Punktschätzung für die Differenz der Schlaganfallraten zwischen Behandlungs- und Kontrollgruppe betrug überraschende $p_{trmt} - p_{ctrl} = 0,090$ (ein *höheres* Risiko in der Stent-Gruppe).
+
+Der berechnete Standardfehler dieser Schätzung beträgt $SE = 0,028$.
+
+Wir konstruieren das 95%-Konfidenzintervall: $$ 0,090 \pm 1,96 \times 0,028 = (0,035; 0,145) $$
+
+**Interpretation:** Wir sind zu 95 % zuversichtlich, dass die Implantation eines Stents das Schlaganfallrisiko innerhalb von 30 Tagen um eine Rate zwischen 3,5 % und 14,5 % *erhöht* hat. Da dieses Intervall die Null (kein Unterschied) nicht einschließt, haben wir starke Evidenz dafür, dass der Stent einen messbaren, realen Effekt hat – in diesem Fall leider einen negativen.
+
+::: callout-warning
+## Achtung: Interpretationsfallen
+
+Ein 95%-Konfidenzintervall bedeutet **nicht**, dass "der wahre Parameter mit 95% Wahrscheinlichkeit in diesem speziellen Intervall liegt". Der wahre Parameter ist fixiert – er ist entweder drin oder nicht. Die 95 % beziehen sich auf die *Methode*: Würden wir diese Studie 100 Mal wiederholen und 100 solcher Intervalle berechnen, würden etwa 95 davon den wahren Parameter der Grundgesamtheit erfassen.
+:::
+
+## Zusammenfassung
+
+In diesem Kapitel haben wir den Grundstein für die statistische Inferenz gelegt, also den Prozess, bei dem wir von einer Stichprobe auf eine Grundgesamtheit schließen. Die zentrale Herausforderung dabei ist die natürliche Variabilität, die von Stichprobe zu Stichprobe auftritt.
+
+Die Kernkonzepte dieses Kapitels sind:
+
+- **Der Zentrale Grenzwertsatz (ZGS):** Dies ist das theoretische Fundament, das uns erlaubt, Vorhersagen über die Variabilität von Stichprobenstatistiken zu treffen. Der ZGS besagt, dass die Verteilung von vielen Stichprobenstatistiken (wie dem Stichprobenanteil $\hat{p}$ oder dem Mittelwert $\bar{x}$), die sogenannte **Stichprobenverteilung**, unter bestimmten Bedingungen annähernd einer glockenförmigen Kurve folgt.
+- **Die Normalverteilung:** Diese glockenförmige Kurve wird mathematisch durch die Normalverteilung $N(\mu, \sigma)$ beschrieben. Wir haben gelernt, wie wir mit ihr arbeiten können, indem wir Beobachtungen über den **Z-Wert** standardisieren. Dies ermöglicht es uns, Wahrscheinlichkeiten und Perzentile zu berechnen und damit anzugeben, wie ungewöhnlich eine bestimmte Beobachtung ist.
+- **Standardfehler und Fehlermarge:** Um die Unsicherheit einer Punktschätzung zu quantifizieren, haben wir den **Standardfehler (SE)** als die Standardabweichung der Stichprobenverteilung eingeführt. Die **Fehlermarge** ($z^\star \times SE$) gibt uns dann einen praktischen Bereich um unsere Schätzung an.
+- **Das Konfidenzintervall:** Durch die Kombination dieser Konzepte haben wir ein erstes, zentrales Werkzeug der Inferenzstatistik konstruiert: das 95%-Konfidenzintervall. Die Formel `Punktschätzung ± 1.96 × SE` liefert uns einen Wertebereich, für den wir zu 95% zuversichtlich sind, dass er den wahren, unbekannten Parameter der Grundgesamtheit enthält. Die korrekte Interpretation dieses Intervalls ist dabei entscheidend, um Fehlschlüsse zu vermeiden.

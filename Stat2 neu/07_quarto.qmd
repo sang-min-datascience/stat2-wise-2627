@@ -1,0 +1,89 @@
+
+# Anhang: Quarto Survival Guide {-}
+
+Gerade bei intensiven Projektphasen – wie einer Data Challenge, für die Sie exakt zwei Wochen Zeit haben – darf die Software Sie nicht aufhalten. Sie brauchen einen Workflow, der Ihre statistischen Analysen direkt und reproduzierbar in professionelle Berichte oder Präsentationen übersetzt. Copy-and-Paste von R nach Word ist fehleranfällig und kostet wertvolle Zeit.
+
+Dieser Guide ist kein umfassendes Handbuch. Er fokussiert sich auf die 20 % der Quarto-Funktionen, mit denen Sie 80 % Ihrer Abgaben und Präsentationen problemlos bewältigen.
+
+---
+
+## Das Skelett (Der YAML-Header)
+
+Jedes Quarto-Dokument beginnt mit einem sogenannten YAML-Header. Dieser Block steht ganz oben in der Datei, wird von `---` umschlossen und steuert das übergeordnete Format. Hier entscheiden Sie mit einem einzigen Wort, ob RStudio einen Textbericht oder eine Präsentation generieren soll.
+
+**Für einen klassischen HTML-Bericht (Hausarbeit/Analyse):**
+```yaml
+---
+title: "Analyse der Kreditrisiken"
+author: "Ihr Name"
+format: html
+theme: spacelab
+toc: true
+---
+```
+*(Tipp: `toc: true` generiert automatisch ein Inhaltsverzeichnis anhand Ihrer Überschriften).*
+
+**Für eine interaktive Präsentation (Folien):**
+```yaml
+---
+title: "Analyse der Kreditrisiken"
+author: "Ihr Name"
+format: revealjs
+theme: simple
+---
+```
+*(Tipp: Wenn Sie `revealjs` nutzen, erzeugt jede Hauptüberschrift `##` automatisch eine neue Folie).*
+
+---
+
+## Die Markdown-Basics (Textformatierung)
+
+Quarto nutzt Markdown für die Textformatierung. Sie benötigen keine Buttons für das Layout, sondern tippen einfache Sonderzeichen direkt in den Text. Das sind die absoluten Grundlagen, die Sie benötigen:
+
+* **Überschriften:** Nutzen Sie Rauten (`#`). 
+  * `# Ebene 1 (Hauptkapitel)`
+  * `## Ebene 2 (Unterkapitel oder neue Folie)`
+  * `### Ebene 3 (Abschnitt)`
+* **Hervorhebungen:** Nutzen Sie Sternchen.
+  * `**Fettgedruckt**` wird zu **Fettgedruckt**
+  * `*Kursiv*` wird zu *Kursiv*
+* **Listen:** Nutzen Sie einfache Spiegelstriche oder Sternchen, gefolgt von einem Leerzeichen. Um eine Liste zu starten, muss davor zwingend eine Leerzeile stehen!
+  * Punkt 1
+  * Punkt 2
+* **Links:** `[Sichtbarer Text](https://www.link.de)`
+
+---
+
+## Chunk-Kontrolle (Die Magie)
+
+Die wahre Stärke von Quarto liegt in den "Code-Chunks". Das sind isolierte Blöcke, in denen Ihr R-Code ausgeführt wird. Sie steuern über sogenannte **Hash-Pipe-Optionen (`#|`)**, was der Leser am Ende im fertigen Dokument sieht.
+
+Ein typischer Code-Chunk sieht so aus:
+
+`````markdown
+```r
+#| echo: false
+#| warning: false
+#| message: false
+library(ggplot2)
+ggplot(mtcars, aes(x = hp, y = mpg)) + geom_point()
+```
+`````
+
+**Die wichtigsten Befehle zur Output-Steuerung:**
+
+* `#| echo: false` $\rightarrow$ Der Code selbst wird im Dokument **ausgeblendet**, aber das Resultat (z. B. der Plot oder die Tabelle) wird **angezeigt**. Das ist essenziell für Berichte, die von Fachfremden oder dem Management gelesen werden!
+* `#| eval: false` $\rightarrow$ Der Code wird **angezeigt**, aber **nicht ausgeführt** (nützlich, wenn Sie nur zeigen wollen, wie ein Befehl aussieht).
+* `#| warning: false` $\rightarrow$ Unterdrückt rote R-Warnmeldungen im finalen Dokument.
+* `#| message: false` $\rightarrow$ Unterdrückt allgemeine Info-Texte von R (z. B. beim Laden von Paketen).
+* `#| fig-cap: "Ihre Bildunterschrift"` $\rightarrow$ Fügt automatisch eine Beschriftung unter Ihre erstellte Grafik ein.
+
+---
+
+## Best Practices für Abgaben
+
+Halten Sie sich an diese drei eisernen Regeln, um Fehler beim Rendern (Kompilieren) kurz vor der Abgabe-Deadline zu vermeiden:
+
+1. **Der Setup-Chunk gehört nach ganz oben:** Laden Sie alle benötigten Pakete (z. B. `library(dplyr)`) und Ihre Datensätze immer im allerersten Code-Chunk direkt unter dem YAML-Header. Wenn Sie Pakete mitten im Text laden, verlieren Sie schnell den Überblick. Versehen Sie diesen Setup-Chunk immer mit `#| message: false` und `#| warning: false`.
+2. **Text und Code strikt trennen:** Schreiben Sie Ihre Schlussfolgerungen und Interpretationen immer im normalen Textbereich (weiß) und niemals als Kommentare (`#`) versteckt im Code-Bereich (grau).
+3. **Regelmäßig rendern:** Drücken Sie nicht erst ganz am Ende Ihres Projekts auf den "Render"-Button. Rendern Sie das Dokument regelmäßig (z. B. nach jedem neuen Kapitel oder komplexen Plot). Wenn ein Fehler auftritt, wissen Sie so sofort, dass er im zuletzt geschriebenen Block stecken muss.

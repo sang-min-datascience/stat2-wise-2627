@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="de" xml:lang="de"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>6&nbsp; Fragebogendaten und Latente Konstrukte – Statistik 2: Inferenz und Modellierung</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./07_quarto.html" rel="next">
+<link href="./05_modellauswahl.html" rel="prev">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-5b591d931333c16fce5a4fa7f89e0318.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/quarto-contrib/output-styling/output-styling-default.css" rel="stylesheet">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "Keine Treffer",
+    "search-matching-documents-text": "Treffer",
+    "search-copy-link-title": "Link in die Suche kopieren",
+    "search-hide-matches-text": "Zusätzliche Treffer verbergen",
+    "search-more-match-text": "weitere Treffer in diesem Dokument",
+    "search-more-matches-text": "weitere Treffer in diesem Dokument",
+    "search-clear-button-title": "Zurücksetzen",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Abbrechen",
+    "search-submit-button-title": "Abschicken",
+    "search-label": "Suchen"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Seitenleiste umschalten" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./06_faktoranalyse.html"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Fragebogendaten und Latente Konstrukte</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Seitenleiste umschalten" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Suchen" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="./">Statistik 2: Inferenz und Modellierung</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Suchen"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Vorwort</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./01_grundlagen_inferenz.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Grundlagen der Inferenz mit Stichproben</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./02_angewandte_inferenz.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Angewandte Inferenz</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./03_regression_deskriptiv.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Lineare Regression (OLS)</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04_logistische_regression.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Logistische Regression</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05_modellauswahl.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Modellselektion</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./06_faktoranalyse.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Fragebogendaten und Latente Konstrukte</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./07_quarto.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Anhang: Quarto Survival Guide</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Inhaltsverzeichnis</h2>
+   
+  <ul class="collapse">
+  <li><a href="#der-paradigmenwechsel-unsupervised-learning" id="toc-der-paradigmenwechsel-unsupervised-learning" class="nav-link active" data-scroll-target="#der-paradigmenwechsel-unsupervised-learning"><span class="header-section-number">6.1</span> Der Paradigmenwechsel: Unsupervised Learning</a></li>
+  <li><a href="#durchführung-einer-faktoranalyse-in-r" id="toc-durchführung-einer-faktoranalyse-in-r" class="nav-link" data-scroll-target="#durchführung-einer-faktoranalyse-in-r"><span class="header-section-number">6.2</span> Durchführung einer Faktoranalyse in R</a></li>
+  <li><a href="#zusammenfassung-die-daten-pipeline" id="toc-zusammenfassung-die-daten-pipeline" class="nav-link" data-scroll-target="#zusammenfassung-die-daten-pipeline"><span class="header-section-number">6.3</span> Zusammenfassung: Die Daten-Pipeline</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Fragebogendaten und Latente Konstrukte</span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="callout callout-style-simple callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Hinweis</span>Kompetenzziele für dieses Kapitel
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Nach der Bearbeitung dieses Kapitels können Sie:</p>
+<ol type="1">
+<li><strong>Supervised vs.&nbsp;Unsupervised Learning:</strong> Den Unterschied zwischen prädiktiver Modellierung (Regression) und strukturentdeckenden Verfahren erkennen.</li>
+<li><strong>Latente Konstrukte verstehen:</strong> Das Konzept hinter unbeobachtbaren Variablen (z. B. “Zufriedenheit”, “Stress”) und deren Messung durch manifeste Fragebogen-Items erklären.</li>
+<li><strong>Dimensionsreduktion anwenden:</strong> Eine Explorative Faktoranalyse (EFA) in R durchführen, Scree-Plots interpretieren und Faktorwerte (Scores) berechnen, um diese als saubere Prädiktoren in Regressionsmodellen zu nutzen.</li>
+</ol>
+</div>
+</div>
+<p>In den Kapiteln 3 bis 5 haben wir uns intensiv mit der <strong>Regression</strong> beschäftigt. Wir hatten immer eine klare, bekannte Zielvariable <span class="math inline">\(y\)</span> (z. B. Körpermasse, Zinssatz, Rückruf-Status), die wir durch Prädiktoren <span class="math inline">\(x\)</span> vorhersagen wollten.</p>
+<p>In der modernen Data Science nennt man diesen Ansatz <strong>Supervised Learning (Überwachtes Lernen)</strong>: Das Modell wird anhand von konkreten “Lösungen” (den beobachteten <span class="math inline">\(y\)</span>-Werten) trainiert und korrigiert seine Fehler.</p>
+<section id="der-paradigmenwechsel-unsupervised-learning" class="level2" data-number="6.1">
+<h2 data-number="6.1" class="anchored" data-anchor-id="der-paradigmenwechsel-unsupervised-learning"><span class="header-section-number">6.1</span> Der Paradigmenwechsel: Unsupervised Learning</h2>
+<p>Oft stehen wir in der empirischen Forschung (insbesondere bei Umfragen und Fragebögen) vor einem völlig anderen Problem: Wir haben gar kein konkretes <span class="math inline">\(y\)</span>, das wir vorhersagen wollen. Stattdessen haben wir einen riesigen Datensatz an <span class="math inline">\(x\)</span>-Variablen und wollen wissen: <strong>Gibt es hier verborgene Muster oder Strukturen?</strong></p>
+<p>Dieser Ansatz heißt <strong>Unsupervised Learning (Unüberwachtes Lernen)</strong>. Wir geben dem Algorithmus keine Lösungen vor, sondern lassen ihn die Daten selbstständig ordnen. Eines der wichtigsten Verfahren dafür ist die <strong>Dimensionsreduktion</strong> – und im Kontext von Fragebögen speziell die <strong>Faktoranalyse</strong>.</p>
+<section id="das-praxis-problem-multikollinearität-im-fragebogen" class="level3" data-number="6.1.1">
+<h3 data-number="6.1.1" class="anchored" data-anchor-id="das-praxis-problem-multikollinearität-im-fragebogen"><span class="header-section-number">6.1.1</span> Das Praxis-Problem: Multikollinearität im Fragebogen</h3>
+<p>Stellen Sie sich vor, Sie werten eine Mitarbeiterumfrage aus. Sie haben 15 Fragen auf einer 5-stufigen Likert-Skala gestellt, die alle grob in Richtung “Arbeitszufriedenheit” gehen (z.B. “Ich mag mein Team”, “Mein Chef kommuniziert gut”, “Die Kaffeemaschine funktioniert”).</p>
+<p>Wenn Sie nun versuchen, die Produktivität (<span class="math inline">\(y\)</span>) der Mitarbeiter durch diese 15 Fragen (<span class="math inline">\(x_1\)</span> bis <span class="math inline">\(x_{15}\)</span>) in einem multiplen Regressionsmodell (<code>lm</code>) vorherzusagen, tappen Sie in eine massive Falle: <strong>Multikollinearität</strong> (siehe Kapitel 3). Wer bei “Ich mag mein Team” eine 5 ankreuzt, kreuzt oft auch bei “Gutes Arbeitsklima” eine 5 an. Die Variablen korrelieren so stark untereinander, dass die OLS-Mathematik zusammenbricht und die marginalen Effekte der einzelnen Fragen uninterpretierbar werden.</p>
+</section>
+<section id="die-lösung-latente-konstrukte" class="level3" data-number="6.1.2">
+<h3 data-number="6.1.2" class="anchored" data-anchor-id="die-lösung-latente-konstrukte"><span class="header-section-number">6.1.2</span> Die Lösung: Latente Konstrukte</h3>
+<p>Anstatt 15 hochkorrelierte Fragen ins Modell zu zwingen, drehen wir die Logik um: Wir gehen davon aus, dass es ein unsichtbares, <strong>latentes Konstrukt</strong> (die wahre, innere “Arbeitszufriedenheit”) gibt. Dieses Konstrukt können wir nicht direkt messen. Wir können nur die 15 beobachtbaren Reaktionen (die <strong>manifesten Variablen</strong>) messen, die durch dieses Konstrukt verursacht werden.</p>
+<p>Die <strong>Explorative Faktoranalyse (EFA)</strong> sucht nach genau diesen verborgenen latenten Variablen (den “Faktoren”). Sie fasst hochkorrelierte Einzelfragen zu wenigen, unkorrelierten Über-Dimensionen zusammen. Aus 15 Fragen wird so vielleicht ein einziger “Zufriedenheits-Score”, den wir danach sauber und gefahrlos in unser Regressionsmodell einbauen können.</p>
+<hr>
+</section>
+</section>
+<section id="durchführung-einer-faktoranalyse-in-r" class="level2" data-number="6.2">
+<h2 data-number="6.2" class="anchored" data-anchor-id="durchführung-einer-faktoranalyse-in-r"><span class="header-section-number">6.2</span> Durchführung einer Faktoranalyse in R</h2>
+<p>Wir nutzen den <code>bfi</code>-Datensatz aus dem <code>psych</code>-Paket. Er enthält die Antworten von über 2.000 Personen auf 25 Fragen zu ihrer Persönlichkeit. Wir wollen prüfen, ob sich diese 25 Einzelfragen auf zugrundeliegende Persönlichkeits-Faktoren (Dimensionen) reduzieren lassen.</p>
+<section id="schritt-1-wie-viele-faktoren-gibt-es-der-scree-plot" class="level3" data-number="6.2.1">
+<h3 data-number="6.2.1" class="anchored" data-anchor-id="schritt-1-wie-viele-faktoren-gibt-es-der-scree-plot"><span class="header-section-number">6.2.1</span> Schritt 1: Wie viele Faktoren gibt es? (Der Scree-Plot)</h3>
+<p>Bevor wir Faktoren extrahieren, müssen wir entscheiden, <em>wie viele</em> Faktoren mathematisch sinnvoll sind. Jede Frage ist eine Dimension. Wir haben 25 Dimensionen. Ein Faktor ist nur dann nützlich, wenn er wesentlich mehr Information (Varianz) bündelt als eine einzelne, isolierte Frage.</p>
+<p>Das Standard-Werkzeug dafür ist der <strong>Scree-Plot</strong> in Kombination mit der <strong>Parallelanalyse</strong>.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">fa.parallel</span>(fragebogen_daten, <span class="at">fa =</span> <span class="st">"fa"</span>, <span class="at">fm =</span> <span class="st">"minres"</span>, <span class="at">main =</span> <span class="st">"Scree-Plot und Parallelanalyse"</span>)</span></code></pre></div><button title="In die Zwischenablage kopieren" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="06_faktoranalyse_files/figure-html/unnamed-chunk-2-1.png" class="img-fluid figure-img" width="672"></p>
+<figcaption>Der Scree-Plot mit Parallelanalyse. Wir suchen den Punkt, an dem die blauen Dreiecke (echte Daten) unter die rote Linie (Zufallsdaten) fallen.</figcaption>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Parallel analysis suggests that the number of factors =  6  and the number of components =  NA </code></pre>
+</div>
+</div>
+<p><strong>Wie Sie diesen Plot lesen:</strong></p>
+<ul>
+<li>Die Y-Achse (Eigenwerte) zeigt, wie viel “Informationskraft” ein Faktor hat. Ein Wert von über 1 bedeutet: Dieser Faktor bündelt mehr Information als eine einzelne Frage.</li>
+<li>Die <strong>blaue Linie</strong> zeigt unsere tatsächlichen Faktoren.</li>
+<li>Die <strong>rote, gestrichelte Linie</strong> zeigt, wie die Faktoren aussehen würden, wenn unsere Daten reiner Zufall (ohne jedes Muster) wären.</li>
+<li><strong>Die Entscheidungsregel:</strong> Wir behalten nur die Faktoren, deren blaue Dreiecke <em>über</em> der roten Zufallslinie (und idealerweise über 1.0) liegen.</li>
+</ul>
+<p>Das Diagramm ist eindeutig: Nach dem 5. Faktor flacht die Kurve massiv ab (der “Geröll”-Knick, englisch <em>scree</em>). Es gibt <strong>5 latente Konstrukte</strong> in diesen 25 Fragen. (Psychologen erkennen hier sofort die “Big Five” der Persönlichkeitsforschung wieder).</p>
+</section>
+<section id="schritt-2-die-faktoren-extrahieren-faktorladungen" class="level3" data-number="6.2.2">
+<h3 data-number="6.2.2" class="anchored" data-anchor-id="schritt-2-die-faktoren-extrahieren-faktorladungen"><span class="header-section-number">6.2.2</span> Schritt 2: Die Faktoren extrahieren (Faktorladungen)</h3>
+<p>Nachdem wir wissen, dass wir 5 Faktoren suchen, lassen wir R berechnen, welche der 25 Fragen zu welchem dieser 5 Faktoren gehören.</p>
+<p><em>(Hinweis: Wir nutzen hier eine “oblique” Rotation, <code>rotate = "oblimin"</code>. Das erlaubt den Faktoren, untereinander leicht zu korrelieren – was in der psychologischen und wirtschaftlichen Realität fast immer der Fall ist).</em></p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Führe die Faktoranalyse mit 5 Faktoren durch</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>modell_efa <span class="ot">&lt;-</span> <span class="fu">fa</span>(fragebogen_daten, <span class="at">nfactors =</span> <span class="dv">5</span>, <span class="at">rotate =</span> <span class="st">"oblimin"</span>, <span class="at">fm =</span> <span class="st">"minres"</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Zeige die Zuordnung (Ladungen) an. Zur besseren Lesbarkeit blenden wir </span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co"># schwache Ladungen (unter 0.3) aus.</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(modell_efa<span class="sc">$</span>loadings, <span class="at">cutoff =</span> <span class="fl">0.3</span>, <span class="at">sort =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="In die Zwischenablage kopieren" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Loadings:
+   MR3    MR5    MR2    MR4    MR1   
+N1  0.832                            
+N2  0.780                            
+N3  0.703                            
+E1         0.555                     
+E2         0.667                     
+E4        -0.587                     
+C1                0.555              
+C2                0.669              
+C3                0.574              
+C4               -0.644              
+C5               -0.563              
+A2                       0.656       
+A3                       0.678       
+A5                       0.537       
+O1                              0.518
+O3                              0.619
+O5                             -0.540
+A1                      -0.435       
+A4                       0.448       
+E3        -0.408                0.302
+E5        -0.418                     
+N4  0.471  0.405                     
+N5  0.483                            
+O2                             -0.473
+O4         0.335                0.363
+
+                 MR3   MR5   MR2   MR4   MR1
+SS loadings    2.504 1.962 1.979 1.890 1.562
+Proportion Var 0.100 0.078 0.079 0.076 0.062
+Cumulative Var 0.100 0.179 0.258 0.333 0.396</code></pre>
+</div>
+</div>
+<p><strong>Wie Sie diese Matrix lesen:</strong></p>
+<ul>
+<li>In den Spalten sehen Sie unsere 5 verborgenen Faktoren (<code>MR2</code>, <code>MR1</code>, <code>MR3</code>, <code>MR5</code>, <code>MR4</code>).</li>
+<li>In den Zeilen stehen unsere 25 Fragen (z.B. N1 bis N5).</li>
+<li>Die Zahlen sind die <strong>Faktorladungen</strong> (grob vergleichbar mit Korrelationskoeffizienten). Sie reichen von -1 bis +1.</li>
+<li><em>Interpretation:</em> Die Fragen N1 bis N5 laden alle extrem hoch auf dem Faktor <code>MR2</code>. Sie messen also offensichtlich alle dasselbe latente Konstrukt (in der Psychologie: “Neurotizismus”). Die Fragen E1 bis E5 laden gemeinsam auf <code>MR1</code> (“Extraversion”).</li>
+</ul>
+<p>Wir haben das Chaos von 25 Einzelvariablen erfolgreich auf 5 klare, inhaltlich interpretierbare Dimensionen reduziert!</p>
+</section>
+<section id="schritt-3-faktor-scores-für-die-regression-berechnen" class="level3" data-number="6.2.3">
+<h3 data-number="6.2.3" class="anchored" data-anchor-id="schritt-3-faktor-scores-für-die-regression-berechnen"><span class="header-section-number">6.2.3</span> Schritt 3: Faktor-Scores für die Regression berechnen</h3>
+<p>Das ist der entscheidende Moment, der Unsupervised Learning wieder mit Supervised Learning (Kapitel 3) verbindet.</p>
+<p>Anstatt nun 25 wackelige Fragen in unser nächstes Regressionsmodell zu werfen, können wir R anweisen, für jeden Probanden aus den Fragen seine 5 neuen <strong>Faktor-Scores</strong> zu berechnen.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Extrahieren der berechneten Scores für jede Person</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>faktoren_scores <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(modell_efa<span class="sc">$</span>scores)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Wir schauen uns die ersten 5 Probanden an:</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(faktoren_scores)</span></code></pre></div><button title="In die Zwischenablage kopieren" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>             MR3         MR5         MR2         MR4        MR1
+61617 -0.2224231 -0.12783775 -1.32676830 -0.85525979 -1.6091998
+61618  0.1617972 -0.46568392 -0.57221750 -0.07242405 -0.1722192
+61620  0.6190699 -0.14137047 -0.04294818 -0.55241355  0.2334105
+61621 -0.1169216 -0.05806766 -1.06320157 -0.09063432 -1.0615160
+61622 -0.1737278 -0.46001082 -0.09947299 -0.71181405 -0.6608547
+61623  0.1934192 -1.09198431  1.39949856  0.38875007  0.6242749</code></pre>
+</div>
+</div>
+<p><strong>Was haben wir erreicht?</strong> Wir haben jetzt einen stark komprimierten, bereinigten Datensatz. Wenn wir nun z.B. untersuchen wollen, wie sich die Persönlichkeit auf das Gehalt (<span class="math inline">\(y\)</span>) auswirkt, nutzen wir nicht mehr die 25 unübersichtlichen und kollinearen Einzelfragen. Wir nehmen einfach diese 5 neuen Variablen (<code>MR1</code> bis <code>MR5</code>) und stecken sie in eine klassische multiple OLS-Regression (<code>lm(gehalt ~ MR1 + MR2 + ...)</code>).</p>
+</section>
+</section>
+<section id="zusammenfassung-die-daten-pipeline" class="level2" data-number="6.3">
+<h2 data-number="6.3" class="anchored" data-anchor-id="zusammenfassung-die-daten-pipeline"><span class="header-section-number">6.3</span> Zusammenfassung: Die Daten-Pipeline</h2>
+<p>Die Faktoranalyse ist kein Selbstzweck, sondern oft der erste, entscheidende Schritt einer professionellen Daten-Pipeline bei Befragungen:</p>
+<ol type="1">
+<li><strong>Unsupervised Step (EFA):</strong> Reduzieren Sie viele, unübersichtliche und hochkorrelierte Items aus dem Fragebogen auf wenige, aussagekräftige Faktoren (latente Konstrukte).</li>
+<li><strong>Scoring:</strong> Berechnen Sie für jede Beobachtung die Werte auf diesen neuen Faktoren.</li>
+<li><strong>Supervised Step (OLS/Logit):</strong> Nutzen Sie diese sauberen Faktor-Scores als Prädiktoren in Ihren Regressionsmodellen, um Zielvariablen vorhersagen, ohne in die Multikollinearitäts-Falle zu tappen.</li>
+</ol>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Kopiert");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Kopiert");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="./05_modellauswahl.html" class="pagination-link" aria-label="Modellselektion">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Modellselektion</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="./07_quarto.html" class="pagination-link" aria-label="Anhang: Quarto Survival Guide">
+        <span class="nav-page-text">Anhang: Quarto Survival Guide</span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

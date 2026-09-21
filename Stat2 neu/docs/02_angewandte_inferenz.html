@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="de" xml:lang="de"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>2&nbsp; Angewandte Inferenz – Statistik 2: Inferenz und Modellierung</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./03_regression_deskriptiv.html" rel="next">
+<link href="./01_grundlagen_inferenz.html" rel="prev">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-bb62276ab45c84d9efd712f51ff97b5a.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-5b591d931333c16fce5a4fa7f89e0318.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/quarto-contrib/output-styling/output-styling-default.css" rel="stylesheet">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "Keine Treffer",
+    "search-matching-documents-text": "Treffer",
+    "search-copy-link-title": "Link in die Suche kopieren",
+    "search-hide-matches-text": "Zusätzliche Treffer verbergen",
+    "search-more-match-text": "weitere Treffer in diesem Dokument",
+    "search-more-matches-text": "weitere Treffer in diesem Dokument",
+    "search-clear-button-title": "Zurücksetzen",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Abbrechen",
+    "search-submit-button-title": "Abschicken",
+    "search-label": "Suchen"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="nav-sidebar floating quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Seitenleiste umschalten" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./02_angewandte_inferenz.html"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Angewandte Inferenz</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Seitenleiste umschalten" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Suchen" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="./">Statistik 2: Inferenz und Modellierung</a> 
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Suchen"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Vorwort</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./01_grundlagen_inferenz.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Grundlagen der Inferenz mit Stichproben</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./02_angewandte_inferenz.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Angewandte Inferenz</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./03_regression_deskriptiv.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Lineare Regression (OLS)</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./04_logistische_regression.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">Logistische Regression</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./05_modellauswahl.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Modellselektion</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./06_faktoranalyse.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Fragebogendaten und Latente Konstrukte</span></span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./07_quarto.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Anhang: Quarto Survival Guide</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Inhaltsverzeichnis</h2>
+   
+  <ul class="collapse">
+  <li><a href="#das-universelle-prinzip-die-anatomie-der-teststatistik" id="toc-das-universelle-prinzip-die-anatomie-der-teststatistik" class="nav-link active" data-scroll-target="#das-universelle-prinzip-die-anatomie-der-teststatistik"><span class="header-section-number">2.1</span> Das universelle Prinzip: Die Anatomie der Teststatistik</a></li>
+  <li><a href="#inferenz-für-anteile-proportionen" id="toc-inferenz-für-anteile-proportionen" class="nav-link" data-scroll-target="#inferenz-für-anteile-proportionen"><span class="header-section-number">2.2</span> Inferenz für Anteile (Proportionen)</a></li>
+  <li><a href="#inferenz-für-mittelwerte" id="toc-inferenz-für-mittelwerte" class="nav-link" data-scroll-target="#inferenz-für-mittelwerte"><span class="header-section-number">2.3</span> Inferenz für Mittelwerte</a></li>
+  <li><a href="#zusammenfassung-der-entscheidungsstrukturen" id="toc-zusammenfassung-der-entscheidungsstrukturen" class="nav-link" data-scroll-target="#zusammenfassung-der-entscheidungsstrukturen"><span class="header-section-number">2.4</span> Zusammenfassung der Entscheidungsstrukturen</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Angewandte Inferenz</span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="callout callout-style-simple callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Hinweis</span>Kompetenzziele für dieses Kapitel
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Nach der Bearbeitung dieses Kapitels können Sie:</p>
+<ol type="1">
+<li><strong>Methodenauswahl:</strong> Für ein gegebenes Datenproblem zielsicher entscheiden, welches Inferenzverfahren (Ein-/Zwei-Stichproben-Anteile, unabhängige oder gepaarte Mittelwerte) mathematisch korrekt ist.</li>
+<li><strong>Voraussetzungsprüfung (Diagnostik):</strong> Die technischen Bedingungen (Unabhängigkeit, Erfolgs-Misserfolgs-Bedingung, Normalität/Ausreißer) für das jeweilige Verfahren anhand der Daten überprüfen, <em>bevor</em> Software eingesetzt wird.</li>
+<li><strong>Software-Kompetenz:</strong> Die R-Funktionen <code>prop.test()</code> und <code>t.test()</code> korrekt parametrisieren und deren Output (p-Wert, Konfidenzintervall) im praktischen Kontext präzise interpretieren.</li>
+</ol>
+</div>
+</div>
+<p>Dieses Kapitel bezieht sich auf Kapitel 16 und 17 aus dem Lehrbuch “Introduction to modern statistics” <span class="citation" data-cites="çetinkaya-rundel2024">(<a href="#ref-çetinkaya-rundel2024" role="doc-biblioref">Çetinkaya-Rundel und Hardin 2024</a>)</span>.</p>
+<p>Während wir im vorangegangenen Kapitel den theoretischen Kern der statistischen Inferenz kennengelernt haben, geht es nun um die operative Anwendung in R.</p>
+<section id="das-universelle-prinzip-die-anatomie-der-teststatistik" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="das-universelle-prinzip-die-anatomie-der-teststatistik"><span class="header-section-number">2.1</span> Das universelle Prinzip: Die Anatomie der Teststatistik</h2>
+<p>Egal ob wir Anteile oder Mittelwerte, eine Gruppe oder zwei Gruppen testen – die Inferenz folgt unter der Haube immer der exakt gleichen konzeptionellen Logik. Wir berechnen eine Teststatistik (wie <span class="math inline">\(Z\)</span> oder <span class="math inline">\(T\)</span>), die uns sagt, wie ungewöhnlich unsere Daten unter der Nullhypothese sind.</p>
+<p>Diese Statistik ist immer ein Verhältnis aus <strong>Signal</strong> und <strong>Rauschen</strong>:</p>
+<p><span class="math display">\[ \text{Teststatistik} = \frac{\text{Signal}}{\text{Rauschen}} = \frac{\text{Beobachtete Schätzung} - \text{Nullwert}}{\text{Standardfehler (SE)}} \]</span></p>
+<ul>
+<li><strong>Das Signal (Zähler):</strong> Wie stark weicht das, was wir in unseren Daten gemessen haben, von dem ab, was die Nullhypothese behauptet?</li>
+<li><strong>Das Rauschen (Nenner):</strong> Wie viel zufällige Schwankung (Standardfehler) erwarten wir allein durch das Ziehen von Stichproben? <em>Denken Sie daran: Da</em> <span class="math inline">\(n\)</span> in der Berechnung des SE stets im Nenner steht, sinkt das Rauschen bei größeren Stichproben massiv.</li>
+</ul>
+<p>Je größer unser Signal im Verhältnis zum Rauschen ist, desto extremer wird unsere Teststatistik und desto kleiner wird der resultierende <strong>p-Wert</strong>. Anstatt diese Standardfehler ab jetzt manuell zu berechnen, überlassen wir die Bruchrechnung R und konzentrieren uns auf das, was Software nicht kann: Die Prüfung der Voraussetzungen und die Interpretation.</p>
+<hr>
+</section>
+<section id="inferenz-für-anteile-proportionen" class="level2" data-number="2.2">
+<h2 data-number="2.2" class="anchored" data-anchor-id="inferenz-für-anteile-proportionen"><span class="header-section-number">2.2</span> Inferenz für Anteile (Proportionen)</h2>
+<p>Wir konzentrieren uns zunächst auf kategoriale Daten (Erfolg vs.&nbsp;Misserfolg).</p>
+<section id="voraussetzungen-für-proportionen" class="level3" data-number="2.2.1">
+<h3 data-number="2.2.1" class="anchored" data-anchor-id="voraussetzungen-für-proportionen"><span class="header-section-number">2.2.1</span> Voraussetzungen für Proportionen</h3>
+<p>Damit die Inferenz (die auf der Normalverteilung basiert) gültig ist, müssen R-Outputs nur interpretiert werden, wenn zwei harte Bedingungen erfüllt sind: 1. <strong>Unabhängigkeit:</strong> Die Beobachtungen stammen aus einer Zufallsstichprobe oder einem randomisierten Experiment. 2. <strong>Erfolgs-Misserfolgs-Bedingung:</strong> Die Stichprobe ist groß genug. Wir erwarten mindestens 10 Erfolge und 10 Misserfolge. (Beim Testen zweier Gruppen gilt dies für <em>beide</em> Gruppen separat).</p>
+</section>
+<section id="operative-umsetzung-in-r-prop.test" class="level3" data-number="2.2.2">
+<h3 data-number="2.2.2" class="anchored" data-anchor-id="operative-umsetzung-in-r-prop.test"><span class="header-section-number">2.2.2</span> Operative Umsetzung in R (<code>prop.test</code>)</h3>
+<section id="ein-einzelner-anteil-p" class="level4" data-number="2.2.2.1">
+<h4 data-number="2.2.2.1" class="anchored" data-anchor-id="ein-einzelner-anteil-p"><span class="header-section-number">2.2.2.1</span> Ein einzelner Anteil (<span class="math inline">\(p\)</span>)</h4>
+<p>Angenommen, eine Umfrage unter 826 Kreditnehmern ergab, dass 578 (ca. 70 %) neue Vorschriften befürworten. Wir wollen testen, ob die Mehrheit (<span class="math inline">\(p &gt; 0.5\)</span>) zustimmt.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Teste, ob der Anteil signifikant von 0.5 abweicht</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">prop.test</span>(<span class="at">x =</span> <span class="dv">578</span>, <span class="at">n =</span> <span class="dv">826</span>, <span class="at">p =</span> <span class="fl">0.5</span>, <span class="at">conf.level =</span> <span class="fl">0.95</span>)</span></code></pre></div><button title="In die Zwischenablage kopieren" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    1-sample proportions test with continuity correction
+
+data:  578 out of 826, null probability 0.5
+X-squared = 131.04, df = 1, p-value &lt; 2.2e-16
+alternative hypothesis: true p is not equal to 0.5
+95 percent confidence interval:
+ 0.6670131 0.7306175
+sample estimates:
+        p 
+0.6997579 </code></pre>
+</div>
+</div>
+<p>R liefert uns direkt den p-Wert und das 95%-Konfidenzintervall. Ist der p-Wert klein (<span class="math inline">\(&lt; 0,05\)</span>), verwerfen wir die Nullhypothese.</p>
+</section>
+<section id="vergleich-zweier-anteile-p_1---p_2" class="level4" data-number="2.2.2.2">
+<h4 data-number="2.2.2.2" class="anchored" data-anchor-id="vergleich-zweier-anteile-p_1---p_2"><span class="header-section-number">2.2.2.2</span> Vergleich zweier Anteile (<span class="math inline">\(p_1 - p_2\)</span>)</h4>
+<div class="callout callout-style-default callout-tip no-icon callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tipp</span>Visuelle Intuition vs.&nbsp;Statistischer Test
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<div class="cell">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="02_angewandte_inferenz_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid figure-img" width="672"></p>
+<figcaption>Täuschend ähnlich: Reicht der sichtbare Unterschied aus, um systematisch zu sein?</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Was sagt uns das Auge? Die Balken (35 % vs.&nbsp;22 %) sehen im Diagramm unterschiedlich aus. Die Intuition flüstert uns einen klaren Effekt zu. Ob dieser Unterschied jedoch ausreicht, um bei kleinen Fallzahlen (<span class="math inline">\(n=40\)</span> und <span class="math inline">\(n=50\)</span>) nicht nur Zufall zu sein, klärt erst der Hypothesentest.</p>
+</div>
+</div>
+<p>In einem medizinischen Experiment (Stents) vergleichen wir eine Behandlungsgruppe mit einer Kontrollgruppe. Wir übergeben R einfach die Vektoren der “Erfolge” und der Gruppengrößen:</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># x: Vektor der Erfolge (z.B. Überlebende)</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co"># n: Vektor der Gruppengrößen</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="fu">prop.test</span>(<span class="at">x =</span> <span class="fu">c</span>(<span class="dv">14</span>, <span class="dv">11</span>), <span class="at">n =</span> <span class="fu">c</span>(<span class="dv">40</span>, <span class="dv">50</span>), <span class="at">conf.level =</span> <span class="fl">0.90</span>)</span></code></pre></div><button title="In die Zwischenablage kopieren" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    2-sample test for equality of proportions with continuity correction
+
+data:  c(14, 11) out of c(40, 50)
+X-squared = 1.2801, df = 1, p-value = 0.2579
+alternative hypothesis: two.sided
+90 percent confidence interval:
+ -0.04957706  0.30957706
+sample estimates:
+prop 1 prop 2 
+  0.35   0.22 </code></pre>
+</div>
+</div>
+<p><strong>Interpretation:</strong> Wenn das von R ausgegebene Konfidenzintervall für die <em>Differenz</em> die Null einschließt, haben wir keine ausreichende Evidenz für einen Unterschied zwischen den Gruppen. R verwendet hier intern automatisch den “gepoolten Anteil”, um das Rauschen unter der Nullhypothese korrekt abzuschätzen.</p>
+<hr>
+</section>
+</section>
+</section>
+<section id="inferenz-für-mittelwerte" class="level2" data-number="2.3">
+<h2 data-number="2.3" class="anchored" data-anchor-id="inferenz-für-mittelwerte"><span class="header-section-number">2.3</span> Inferenz für Mittelwerte</h2>
+<p>Wir wechseln von kategorialen zu numerischen Daten. Die entscheidende Änderung: Wenn wir Mittelwerte (<span class="math inline">\(\mu\)</span>) analysieren, müssen wir die wahre Standardabweichung der Grundgesamtheit durch die Standardabweichung der Stichprobe (<span class="math inline">\(s\)</span>) schätzen. Diese zusätzliche Unsicherheit zwingt uns, das Normalmodell zu verlassen und zur <strong>t-Verteilung</strong> zu wechseln.</p>
+<section id="bedingungen-für-mittelwerte-das-lung-konzept" class="level3" data-number="2.3.1">
+<h3 data-number="2.3.1" class="anchored" data-anchor-id="bedingungen-für-mittelwerte-das-lung-konzept"><span class="header-section-number">2.3.1</span> Bedingungen für Mittelwerte (Das “LUNG”-Konzept)</h3>
+<p>R warnt Sie nicht, wenn Sie ungeeignete Daten in einen t-Test werfen. Sie müssen vorab prüfen:</p>
+<ol type="1">
+<li><strong>Unabhängigkeit:</strong> Zufällige Ziehung / Zuweisung.</li>
+<li><strong>Normalität / Ausreißer:</strong>
+<ul>
+<li><strong>Kleines</strong> <span class="math inline">\(n\)</span> (<span class="math inline">\(&lt; 30\)</span>): Daten dürfen keine eindeutigen Ausreißer oder extreme Schiefe haben (Histogramm prüfen!).</li>
+<li><strong>Großes</strong> <span class="math inline">\(n\)</span> (<span class="math inline">\(\ge 30\)</span>): Durch den Zentralen Grenzwertsatz ist leichte Schiefe tolerierbar, es dürfen aber keine <em>extremen</em> Ausreißer existieren.</li>
+</ul></li>
+</ol>
+</section>
+<section id="operative-umsetzung-in-r-t.test" class="level3" data-number="2.3.2">
+<h3 data-number="2.3.2" class="anchored" data-anchor-id="operative-umsetzung-in-r-t.test"><span class="header-section-number">2.3.2</span> Operative Umsetzung in R (<code>t.test</code>)</h3>
+<p>R erledigt die Berechnung der t-Statistik und der korrekten Freiheitsgrade (<span class="math inline">\(df\)</span>) automatisch für uns.</p>
+<section id="ein-einzelner-mittelwert-mu" class="level4" data-number="2.3.2.1">
+<h4 data-number="2.3.2.1" class="anchored" data-anchor-id="ein-einzelner-mittelwert-mu"><span class="header-section-number">2.3.2.1</span> Ein einzelner Mittelwert (<span class="math inline">\(\mu\)</span>)</h4>
+<p>Wir wollen testen, ob die durchschnittliche Laufzeit bei einem Rennen signifikant vom historischen Nullwert (93,29 Minuten) abweicht:</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">t.test</span>(run17_sample_100<span class="sc">$</span>time, <span class="at">mu =</span> <span class="fl">93.29</span>, <span class="at">conf.level =</span> <span class="fl">0.95</span>)</span></code></pre></div><button title="In die Zwischenablage kopieren" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    One Sample t-test
+
+data:  run17_sample_100$time
+t = 2.8478, df = 99, p-value = 0.005354
+alternative hypothesis: true mean is not equal to 93.29
+95 percent confidence interval:
+  94.83295 101.92338
+sample estimates:
+mean of x 
+ 98.37817 </code></pre>
+</div>
+</div>
+<p><strong>Wie Sie diesen Output lesen:</strong></p>
+<ul>
+<li><strong><code>sample estimates (mean of x)</code></strong>: Unsere Stichprobe von 100 Läufern brauchte im Durchschnitt knapp 98,38 Minuten.</li>
+<li><strong><code>p-value = 0.005354</code></strong>: Dieser Wert ist deutlich kleiner als das Signifikanzniveau von 0,05. Wir verwerfen die Nullhypothese. Die durchschnittliche Laufzeit weicht statistisch signifikant vom historischen Wert (93,29 Minuten) ab.</li>
+<li><strong><code>95 percent confidence interval</code></strong>: Die wahre durchschnittliche Laufzeit aller Teilnehmer liegt mit 95%iger Sicherheit zwischen ca. 94,83 und 101,92 Minuten. Da der historische Wert (93,29) <em>nicht</em> in diesem Intervall liegt, bestätigt dies unser signifikantes Testergebnis.</li>
+</ul>
+</section>
+<section id="vergleich-zweier-unabhängiger-mittelwerte-mu_1---mu_2" class="level4" data-number="2.3.2.2">
+<h4 data-number="2.3.2.2" class="anchored" data-anchor-id="vergleich-zweier-unabhängiger-mittelwerte-mu_1---mu_2"><span class="header-section-number">2.3.2.2</span> Vergleich zweier unabhängiger Mittelwerte (<span class="math inline">\(\mu_1 - \mu_2\)</span>)</h4>
+<div class="callout callout-style-default callout-tip no-icon callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tipp</span>Visuelle Intuition vs.&nbsp;Statistischer Test
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<div class="cell">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="02_angewandte_inferenz_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid figure-img" width="672"></p>
+<figcaption>Die roten Punkte markieren die Mittelwerte. Das Signal muss sich gegen das Rauschen (Überschneidung der Boxen) durchsetzen.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Was sagt uns das Auge? Die Boxen überschneiden sich fast vollständig (massives Rauschen), die Mittelwerte (rote Punkte) scheinen sehr nah beieinander zu liegen. Die Intuition vermutet hier eher keinen Unterschied. Weil wir aber eine große Stichprobe (<span class="math inline">\(n=1000\)</span>) haben, ist das tatsächliche statistische Rauschen (der Standardfehler) winzig. Der folgende t-Test wird zeigen, wie stark uns das Auge hier täuscht.</p>
+</div>
+</div>
+<p>Wir vergleichen das Geburtsgewicht von Babys bei rauchenden (<code>smoker</code>) vs.&nbsp;nicht-rauchenden (<code>nonsmoker</code>) Müttern. Die Mütter sind voneinander unabhängig.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Die Tilde (~) bedeutet: "Modelliere Gewicht in Abhängigkeit von Rauchgewohnheit"</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">t.test</span>(weight <span class="sc">~</span> habit, <span class="at">data =</span> births14)</span></code></pre></div><button title="In die Zwischenablage kopieren" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Welch Two Sample t-test
+
+data:  weight by habit
+t = 3.8166, df = 131.31, p-value = 0.0002075
+alternative hypothesis: true difference in means between group nonsmoker and group smoker is not equal to 0
+95 percent confidence interval:
+ 0.2854852 0.8998751
+sample estimates:
+mean in group nonsmoker    mean in group smoker 
+               7.269873                6.677193 </code></pre>
+</div>
+</div>
+<p><strong>Wie Sie diesen Output lesen:</strong></p>
+<ul>
+<li><strong><code>Welch Two Sample t-test</code></strong>: R verwendet standardmäßig den Welch-t-Test. Dieser ist robust, falls die Varianzen (Streuungen) in beiden Gruppen unterschiedlich groß sind.</li>
+<li><strong><code>sample estimates</code></strong>: Babys von Nichtraucherinnen wogen in dieser Stichprobe im Schnitt 7,27 Pfund, die von Raucherinnen 6,68 Pfund.</li>
+<li><strong><code>p-value = 0.0002075</code></strong>: Ein extrem kleiner Wert (<span class="math inline">\(&lt; 0,05\)</span>). Der Unterschied im Geburtsgewicht ist statistisch hochsignifikant und kann sehr unwahrscheinlich durch bloßen Zufall beim Ziehen der Stichprobe erklärt werden.</li>
+<li><strong><code>95 percent confidence interval</code></strong>: Babys von Nichtraucherinnen sind im Durchschnitt zwischen ca. 0,29 und 0,90 Pfund schwerer. Das Intervall schließt die Null nicht ein, was unsere Entscheidung, die Nullhypothese zu verwerfen, bestätigt.</li>
+</ul>
+</section>
+<section id="vergleich-gepaarter-mittelwerte-mu_diff" class="level4" data-number="2.3.2.3">
+<h4 data-number="2.3.2.3" class="anchored" data-anchor-id="vergleich-gepaarter-mittelwerte-mu_diff"><span class="header-section-number">2.3.2.3</span> Vergleich gepaarter Mittelwerte (<span class="math inline">\(\mu_{diff}\)</span>)</h4>
+<p>Sind die Datenstrukturen <strong>abhängig</strong> (z.B. Buchpreise in der UCLA-Buchhandlung vs.&nbsp;Amazon für <em>exakt dasselbe</em> Buch), verdeckt die enorme Preisvarianz zwischen unterschiedlichen Büchern den eigentlichen Preisunterschied zwischen den Händlern. Ein unabhängiger Test ist hier mathematisch falsch.</p>
+<p>Wir müssen R mitteilen, dass die Daten gepaart sind (<code>paired = TRUE</code>). R berechnet dann intern die Differenz für jedes Paar und führt einen Ein-Stichproben-Test auf diese Preisdifferenzen durch.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">t.test</span>(ucla_textbooks_f18<span class="sc">$</span>bookstore_new, </span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>       ucla_textbooks_f18<span class="sc">$</span>amazon_new, </span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>       <span class="at">paired =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="In die Zwischenablage kopieren" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+    Paired t-test
+
+data:  ucla_textbooks_f18$bookstore_new and ucla_textbooks_f18$amazon_new
+t = 2.2012, df = 67, p-value = 0.03117
+alternative hypothesis: true mean difference is not equal to 0
+95 percent confidence interval:
+ 0.3340641 6.8324064
+sample estimates:
+mean difference 
+       3.583235 </code></pre>
+</div>
+</div>
+<p><strong>Wie Sie diesen Output lesen:</strong></p>
+<ul>
+<li><strong><code>mean difference</code></strong>: Im Durchschnitt waren die Bücher in der UCLA-Buchhandlung in dieser Stichprobe um 3,58 Dollar teurer als exakt dieselben Bücher bei Amazon.</li>
+<li><strong><code>p-value = 0.03117</code></strong>: Da dieser Wert kleiner als 0,05 ist, ist der Preisunterschied statistisch signifikant. Wir verwerfen die Nullhypothese, dass es im Schnitt keinen Preisunterschied gibt.</li>
+<li><strong><code>95 percent confidence interval</code></strong>: Die wahre, durchschnittliche Preisdifferenz für alle Lehrbücher liegt mit 95%iger Sicherheit zwischen 0,33 und 6,83 Dollar. Da das gesamte Intervall im positiven Bereich liegt (größer als 0), können wir sehr sicher sein, dass die UCLA-Buchhandlung systematisch teurer ist.</li>
+</ul>
+<div class="callout callout-style-default callout-note no-icon callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon no-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Hinweis</span>Exkurs aus der Praxis: Sie können jetzt A/B-Testing!
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Wenn Sie die statistischen Tests für zwei Anteile (<code>prop.test</code>) oder zwei Mittelwerte (<code>t.test</code>) verstanden haben, beherrschen Sie bereits eines der wichtigsten Werkzeuge der modernen Wirtschaft: das <strong>A/B-Testing</strong>.</p>
+<p>Technologieunternehmen, E-Commerce-Plattformen und Marketing-Agenturen nutzen diese Tests täglich, um datengetriebene Entscheidungen zu treffen:</p>
+<ul>
+<li><strong>Beispiel Anteile (Conversion Rate):</strong> Führt ein roter “Jetzt Kaufen”-Button (Variante B) zu einer signifikant höheren Klickrate als der bisherige blaue Button (Variante A)? Das ist unter der Haube exakt unser <code>prop.test</code>.</li>
+<li><strong>Beispiel Mittelwerte (User Engagement):</strong> Verbringen Nutzer mit dem neuen Empfehlungs-Algorithmus (Variante B) signifikant mehr Minuten auf der Plattform als mit dem alten (Variante A)? Das berechnet exakt unser <code>t.test</code>.</li>
+</ul>
+<p>Die Mathematik bleibt identisch zu den Beispielen in diesem Kapitel. Lediglich das Vokabular ändert sich: Was wir “Stichprobe 1 und 2” nennen, heißt in der Industrie oft “Control Group” (A) und “Treatment Group” (B). Die statistische Inferenz ist das absolute Fundament, um Signale im Business-Kontext vom bloßen Zufallsrauschen zu trennen.</p>
+</div>
+</div>
+</section>
+</section>
+</section>
+<section id="zusammenfassung-der-entscheidungsstrukturen" class="level2" data-number="2.4">
+<h2 data-number="2.4" class="anchored" data-anchor-id="zusammenfassung-der-entscheidungsstrukturen"><span class="header-section-number">2.4</span> Zusammenfassung der Entscheidungsstrukturen</h2>
+<p>Um das richtige Werkzeug auszuwählen, stellen Sie sich immer diese drei Fragen, bevor Sie Code schreiben:</p>
+<ol type="1">
+<li><strong>Art der Daten:</strong>
+<ul>
+<li>Ja/Nein-Frage (Erfolg/Misserfolg)? <span class="math inline">\(\rightarrow\)</span> <strong>Anteile</strong>. <code>prop.test()</code> nutzen.</li>
+<li>Messwerte (Gewicht, Zeit, Preis)? <span class="math inline">\(\rightarrow\)</span> <strong>Mittelwerte</strong>. <code>t.test()</code> nutzen.</li>
+</ul></li>
+<li><strong>Anzahl der Gruppen:</strong>
+<ul>
+<li>Gegen einen fixen Wert testen? <span class="math inline">\(\rightarrow\)</span> Ein-Stichproben-Test.</li>
+<li>Zwei Gruppen vergleichen? <span class="math inline">\(\rightarrow\)</span> Handelt es sich um getrennte Individuen (unabhängig) oder um zusammenhängende Messungen (gepaart)?</li>
+</ul></li>
+<li><strong>Voraussetzungen diagnostizieren:</strong>
+<ul>
+<li>Bei Proportionen: Die Erfolgs-/Misserfolgs-Regel (<span class="math inline">\(np \ge 10\)</span>) berechnen.</li>
+<li>Bei Mittelwerten: Visuelle Diagnostik der Ausreißer via Histogramm/Boxplot vor dem Modellieren.</li>
+</ul></li>
+</ol>
+
+
+<div id="refs" class="references csl-bib-body hanging-indent" role="list">
+<div id="ref-çetinkaya-rundel2024" class="csl-entry" role="listitem">
+Çetinkaya-Rundel, Mine, und Johanna Hardin. 2024. <em>Introduction to modern statistics</em>. 2nd edition. OpenIntro.
+</div>
+</div>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Kopiert");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Kopiert");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="./01_grundlagen_inferenz.html" class="pagination-link" aria-label="Grundlagen der Inferenz mit Stichproben">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">Grundlagen der Inferenz mit Stichproben</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="./03_regression_deskriptiv.html" class="pagination-link" aria-label="Lineare Regression (OLS)">
+        <span class="nav-page-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Lineare Regression (OLS)</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

@@ -1,0 +1,267 @@
+
+# Lineare Regression (OLS)
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+# Setup-Chunk für dieses Kapitel
+library(openintro)
+library(dplyr)
+library(ggplot2)
+library(broom)
+library(patchwork)
+library(scales)
+
+# Vorbereitung des Loans-Datensatzes
+set.seed(42)
+loans <- loans_full_schema |>
+  mutate(
+    credit_util = total_credit_utilized / total_credit_limit,
+    bankruptcy = as.factor(if_else(public_record_bankrupt == 0, 0, 1)),
+    verified_income = droplevels(verified_income)
+  ) |>
+  rename(credit_checks = inquiries_last_12m) |>
+  select(interest_rate, verified_income, debt_to_income, credit_util, bankruptcy, term, credit_checks) |>
+  na.omit()
+```
+
+::: {.callout-note appearance="simple"}
+## Kompetenzziele für dieses Kapitel
+
+Nach der Bearbeitung dieses Kapitels können Sie:
+
+1.  **Ganzheitliche Modellierung:** Einfache und multiple lineare Regressionsmodelle in R (`lm()`) schätzen und den Output (`broom::tidy()`) simultan deskriptiv und inferenziell auswerten.
+2.  **Marginale Effekte & Ceteris Paribus:** Den Unterschied zwischen einem Modellkoeffizienten und dem tatsächlichen marginalen Effekt verstehen, insbesondere wenn Interaktionseffekte vorliegen.
+3.  **Visuelle Diagnostik:** Die Güte eines Modells ($R^2$) bewerten und die LUNG-Voraussetzungen sowie den Einfluss von Ausreißern anhand von Residuenplots kritisch prüfen.
+:::
+
+In den bisherigen Kapiteln haben wir Gruppen anhand ihrer Mittelwerte oder Anteile verglichen. Die lineare Regression ist ein mächtigeres Werkzeug: Sie erlaubt es uns, den Zusammenhang zwischen einer numerischen Zielvariablen ($y$) und einer oder mehreren Prädiktorvariablen ($x$) kontinuierlich zu modellieren.
+
+Dabei trennen wir nicht mehr künstlich zwischen "Beschreibung" und "Inferenz". Wenn wir eine Gerade an Daten anpassen, wollen wir sofort zwei Dinge wissen: 1. **Deskription:** Wie sieht der Zusammenhang aus? 2. **Inferenz:** Ist dieser Zusammenhang statistisch signifikant oder könnte er nur durch Stichprobenzufall entstanden sein?
+
+------------------------------------------------------------------------
+
+## Die einfache lineare Regression
+
+### Visuelle Intuition und das Modell
+
+Betrachten wir Daten von 104 in Australien gefangenen Kurzschwanzopossums (Datensatz `possum`). Wir wollen wissen, ob die Gesamtlänge eines Tieres (`total_l` in cm) ein guter Prädiktor für seine Kopflänge (`head_l` in mm) ist.
+
+::: {.callout-tip icon="false"}
+## Visuelle Intuition: Die Regressionsgerade
+
+```{r}
+#| echo: false
+#| fig-height: 4
+#| fig-cap: "Jeder Punkt ist ein Opossum. Die blaue Regressionsgerade (Methode der kleinsten Quadrate) modelliert den allgemeinen Trend."
+ggplot(possum, aes(x = total_l, y = head_l)) +
+  geom_point(alpha = 0.6, size = 2, color = "grey30") +
+  geom_smooth(method = "lm", se = FALSE, color = "blue", linewidth = 1.2) +
+  theme_minimal() +
+  labs(
+    x = "Gesamtlänge (cm) [Prädiktor x]",
+    y = "Kopflänge (mm) [Zielvariable y]"
+  )
+```
+
+**Was sagt uns das Auge?** Es gibt einen klaren positiven Trend. Die statistische Methode, um diese blaue Linie exakt zu positionieren, heißt **Regression der kleinsten Quadrate (Ordinary Least Squares, OLS)**. Das Modell nimmt die Form einer Geradengleichung an: $\hat{y} = b_0 + b_1 \times x$
+:::
+
+### Operative Umsetzung in R (`lm`)
+
+Wir nutzen die R-Funktion `lm()` (Linear Model) in Kombination mit `tidy()` aus dem `broom`-Paket, um die komplexe Modell-Mathematik in einer sauberen Tabelle aufzubereiten.
+
+```{r}
+#| echo: true
+#| eval: true
+# Modelliere: Kopflänge in Abhängigkeit (~) von Gesamtlänge
+modell_opossum <- lm(head_l ~ total_l, data = possum)
+tidy(modell_opossum, conf.int = TRUE)
+```
+
+**Wie Sie diese Tabelle lesen:**
+
+1.  **Deskription (Spalte `estimate`):**
+    - **`(Intercept)` (**$b_0 = 42,7$): Theoretischer Startwert. Ein Opossum mit 0 cm Gesamtlänge hätte eine Kopflänge von 42,7 mm (reines Rechenkonstrukt).
+    - **`total_l` (**$b_1 = 0,573$): Für jeden zusätzlichen Zentimeter Gesamtlänge erwarten wir im Durchschnitt einen um 0,573 mm längeren Kopf.
+2.  **Inferenz (`p.value` und `conf.int`):**
+    - Der p-Wert für `total_l` ist extrem klein ($4{,}68 \times 10^{-13}$). Der Zusammenhang ist statistisch hochsignifikant.
+    - Das 95%-Konfidenzintervall liegt zwischen 0,42 und 0,72 mm/cm.
+
+------------------------------------------------------------------------
+
+## Das Konzept der Marginalen Effekte
+
+Bevor wir Modelle komplexer machen, müssen wir einen zentralen Begriff klären: den **Marginalen Effekt**.
+
+Ein marginaler Effekt beantwortet die Frage: *Wenn ich* $x$ um genau eine Einheit erhöhe, um wie viel ändert sich mein vorhergesagtes $y$?
+
+In der einfachen, linearen OLS-Regression ist die Antwort trivial: Der marginale Effekt ist identisch mit dem geschätzten Koeffizienten $b_1$. Egal ob das Opossum 70 cm oder 90 cm lang ist – ein weiterer Zentimeter bringt immer *exakt* 0,573 mm Kopflänge dazu.
+
+**Achtung:** Dies ist ein mathematischer Sonderfall der simplen linearen Modelle! Wenn wir später zu komplexeren Architekturen (wie der logistischen Regression oder Modellen mit Interaktionen) übergehen, sind die Koeffizienten im Output **nicht** mehr automatisch der marginale Effekt.
+
+------------------------------------------------------------------------
+
+## Multiple Lineare Regression und Interaktionen
+
+Die Realität ist selten univariat. Die **multiple Regression** erweitert unser Modell um weitere Prädiktoren ($x_1, x_2, \dots, x_k$).
+
+**Der Ceteris-Paribus-Effekt:** In einem multiplen OLS-Modell ohne Interaktionen misst der Koeffizient $b_1$ den marginalen Effekt von $x_1$ auf $y$, **während alle anderen Variablen konstant gehalten werden (ceteris paribus)**.
+
+### Fallstudie: Zinssätze für Kredite
+
+Wir wollen den zugewiesenen Zinssatz (`interest_rate`) für Kredite anhand der Schuldenquote (`debt_to_income`) und der Kreditlaufzeit (`term`) vorhersagen. Zusätzlich nehmen wir eine kategoriale Variable auf: Gab es in der Vergangenheit eine Insolvenz? (`bankruptcy`: 0 = Nein, 1 = Ja).
+
+```{r}
+#| echo: true
+#| eval: true
+modell_kredite <- lm(interest_rate ~ debt_to_income + term + bankruptcy, data = loans)
+tidy(modell_kredite) |> select(term, estimate, p.value)
+```
+
+**Interpretation:** Ein Kreditnehmer *mit* vergangener Insolvenz (`bankruptcy1`) erhält im Durchschnitt einen um 0,44 Prozentpunkte höheren Zinssatz als ein Kreditnehmer *ohne* Insolvenz – *vorausgesetzt, Laufzeit und Schuldenquote sind exakt gleich.*
+
+### Interaktionseffekte (Wenn Ceteris Paribus bricht)
+
+Was passiert, wenn der Effekt der Schuldenquote auf den Zinssatz davon abhängt, ob jemand bereits eine Insolvenz hatte? Vielleicht bestraft die Bank eine hohe Schuldenquote bei Menschen mit negativer Kredithistorie (Insolvenz) viel härter als bei Menschen mit weißer Weste?
+
+Hier reicht "ceteris paribus" nicht mehr aus. Wir brauchen eine **Interaktion**. In R modellieren wir das mit einem Stern (`*`):
+
+```{r}
+#| echo: true
+#| eval: true
+# Das * erzeugt die Haupteffekte PLUS den Interaktionsterm
+modell_interaktion <- lm(interest_rate ~ debt_to_income * bankruptcy + term, data = loans)
+tidy(modell_interaktion) |> select(term, estimate, p.value)
+```
+
+**Wie Sie eine Interaktion lesen:** R hat eine neue Zeile generiert: `debt_to_income:bankruptcy1`. Der p-Wert (0,0017) zeigt: Die Interaktion ist statistisch hochsignifikant.
+
+**Der mathematische Hintergrund: Partielle Ableitungen** Um zu verstehen, warum der isolierte Koeffizient nun nicht mehr automatisch der marginale Effekt ist, hilft die exakte Definition: Der marginale Effekt einer kontinuierlichen Variablen $x_1$ auf $\hat{y}$ ist die **partielle Ableitung** der Regressionsgleichung nach $x_1$.
+
+Betrachten wir die geschätzte Modellgleichung mit Interaktion: $$ \hat{y} = b_0 + b_1 x_1 + b_2 x_2 + b_3 (x_1 \times x_2) + b_4 x_3 $$ *(wobei* $x_1$ = `debt_to_income`, $x_2$ = `bankruptcy1`, $x_3$ = `term`)
+
+Leiten wir diese Funktion partiell nach $x_1$ ab, erhalten wir den marginalen Effekt: $$ \frac{\partial \hat{y}}{\partial x_1} = b_1 + b_3 x_2 $$
+
+Der marginale Effekt von $x_1$ ist also keine Konstante mehr (wie im einfachen linearen Fall), sondern **hängt linear vom aktuellen Wert der Variablen** $x_2$ ab.
+
+Wenden wir diese partielle Ableitung auf unsere konkreten Schätzer an: $$ \frac{\partial \text{interest\_rate}}{\partial \text{debt\_to\_income}} = 0,016 + 0,086 \times \text{bankruptcy1} $$
+
+- Für Personen **ohne Insolvenz** (`bankruptcy1 = 0`) fällt der hintere Teil der Gleichung weg. Der marginale Effekt ist identisch mit dem Haupteffekt: **0,016**.
+- Für Personen **mit Insolvenz** (`bankruptcy1 = 1`) greift die Interaktion voll. Der marginale Effekt ist die Summe: $0,016 + 0,086 \times 1 =$ **0,102**.
+
+**Fazit:** Wenn eine Insolvenz vorliegt, ist der Zinssatz-Aufschlag für jeden zusätzlichen Punkt Schuldenquote mehr als sechsmal so hoch! Die Definition über die partielle Ableitung zwingt uns dazu, das statische Lesen von Einzeleffekten aufzugeben – ein Konzept, das bei der logistischen Regression im nächsten Kapitel noch massiv an Bedeutung gewinnen wird.
+
+::: {.callout-tip icon="false"}
+## Visuelle Intuition: Interaktionen erkennen
+
+```{r}
+#| echo: false
+#| fig-height: 4
+#| fig-cap: "Ohne Interaktion (links) erzwingt das Modell parallele Linien (konstanter marginaler Effekt). Mit Interaktion (rechts) dürfen die Geraden unterschiedliche Steigungen annehmen."
+p_no_int <- ggplot(loans |> sample_n(1000), aes(x = debt_to_income, y = interest_rate, color = bankruptcy)) +
+  geom_point(alpha = 0.2) +
+  # simuliere parallele Linien
+  geom_line(stat="smooth", method="lm", formula=y~x, alpha=0.5, linewidth=1, aes(group=bankruptcy)) +
+  scale_color_manual(values = c("0" = "#5D9BBE", "1" = "#F25C3E"), labels = c("Nein", "Ja")) +
+  theme_minimal() + theme(legend.position = "none") +
+  labs(title = "Ohne Interaktion", x = "Schuldenquote", y = "Zinssatz (%)")
+
+p_int <- ggplot(loans |> sample_n(1000), aes(x = debt_to_income, y = interest_rate, color = bankruptcy)) +
+  geom_point(alpha = 0.2) +
+  geom_smooth(method = "lm", se = FALSE, linewidth=1.2) +
+  scale_color_manual(values = c("0" = "#5D9BBE", "1" = "#F25C3E"), labels = c("Nein", "Ja")) +
+  theme_minimal() +
+  labs(title = "Mit Interaktion", x = "Schuldenquote", y = NULL, color = "Insolvenz")
+
+p_no_int + p_int
+```
+
+Man sieht rechts deutlich: Die orangefarbene Linie (mit Insolvenz) ist wesentlich steiler. Der marginale Effekt der Schuldenquote ($\frac{\partial \hat{y}}{\partial x_1}$) ist in dieser Gruppe signifikant stärker.
+:::
+
+::: {.callout-tip icon="false"}
+## Visuelle Intuition: Interaktionen erkennen
+
+```{r}
+#| echo: false
+#| fig-height: 4
+#| fig-cap: "Ohne Interaktion (links) erzwingt das Modell parallele Linien. Mit Interaktion (rechts) dürfen die Geraden unterschiedliche Steigungen annehmen."
+p_no_int <- ggplot(loans |> sample_n(1000), aes(x = debt_to_income, y = interest_rate, color = bankruptcy)) +
+  geom_point(alpha = 0.2) +
+  # simuliere parallele Linien
+  geom_line(stat="smooth", method="lm", formula=y~x, alpha=0.5, linewidth=1, aes(group=bankruptcy)) +
+  scale_color_manual(values = c("0" = "#5D9BBE", "1" = "#F25C3E"), labels = c("Nein", "Ja")) +
+  theme_minimal() + theme(legend.position = "none") +
+  labs(title = "Ohne Interaktion", x = "Schuldenquote", y = "Zinssatz (%)")
+
+p_int <- ggplot(loans |> sample_n(1000), aes(x = debt_to_income, y = interest_rate, color = bankruptcy)) +
+  geom_point(alpha = 0.2) +
+  geom_smooth(method = "lm", se = FALSE, linewidth=1.2) +
+  scale_color_manual(values = c("0" = "#5D9BBE", "1" = "#F25C3E"), labels = c("Nein", "Ja")) +
+  theme_minimal() +
+  labs(title = "Mit Interaktion", x = "Schuldenquote", y = NULL, color = "Insolvenz")
+
+p_no_int + p_int
+```
+
+Man sieht rechts deutlich: Die orangefarbene Linie (mit Insolvenz) ist wesentlich steiler. Der Effekt der Schuldenquote ist in dieser Gruppe stärker.
+:::
+
+------------------------------------------------------------------------
+
+## Modellgüte und LUNG-Bedingungen
+
+Wie verlässlich sind unsere gezogenen Schlüsse?
+
+### Das Bestimmtheitsmaß ($R^2$)
+
+Das $R^2$ gibt an, **welcher Anteil der Streuung (Varianz) in der Zielvariablen durch unser Modell erklärt wird**.
+
+```{r}
+#| echo: true
+#| eval: true
+glance(modell_interaktion) |> select(r.squared, adj.r.squared, p.value)
+```
+
+Unser Modell erklärt nur knapp 2,5 % ($R^2 \approx 0,025$) der Variabilität in den Zinssätzen. Die Effekte sind zwar hochsignifikant (p-Wert \< 0.05), aber es gibt offensichtlich noch viele andere Variablen (wie den Credit Score), die den Zinssatz massiv beeinflussen.
+
+*(Hinweis: Warum wir bei multiplen Modellen immer auf das `adj.r.squared` (Angepasstes R-Quadrat) schauen sollten, klären wir in Kapitel 5 zur Modellauswahl).*
+
+### Die LUNG-Bedingungen prüfen
+
+Wir dürfen die p-Werte unseres Modells nur vertrauen, wenn vier technische Bedingungen (LUNG) erfüllt sind:
+
+1.  **L - Linearität:** Der Zusammenhang muss linear sein.
+2.  **U - Unabhängigkeit:** Die Beobachtungen müssen voneinander unabhängig sein.
+3.  **N - Normalverteilte Residuen:** Die Residuen (die Vorhersagefehler: $e_i = y_i - \hat{y}_i$) sollten annähernd glockenförmig verteilt sein.
+4.  **G - Gleiche Varianz (Homoskedastizität):** Die Streuung der Residuen sollte konstant bleiben, egal ob die Vorhersage klein oder groß ist.
+
+```{r}
+#| echo: true
+#| eval: true
+#| fig-height: 4
+#| fig-cap: "Links: Prüfung auf Normalität (N). Rechts: Prüfung auf Gleiche Varianz (G)."
+resid_daten <- augment(modell_interaktion)
+
+p1 <- ggplot(resid_daten, aes(x = .resid)) + 
+  geom_histogram(bins = 30, fill = "steelblue", color = "white") +
+  theme_minimal() + labs(title = "Verteilung der Residuen")
+
+p2 <- ggplot(resid_daten, aes(x = .fitted, y = .resid)) + 
+  geom_point(alpha = 0.3) + geom_hline(yintercept = 0, linetype = "dashed") +
+  theme_minimal() + labs(title = "Residuen vs. Vorhersagewerte")
+
+p1 + p2
+```
+
+**Diagnose:** Die Residuen sind rechtssteil (nicht perfekt normal) und im Streudiagramm sehen wir diagonale Schnittkanten (oft ein Zeichen für harte Grenzen in den Originaldaten, z.B. wenn Zinssätze nicht beliebig klein werden können). Das Modell stößt hier an methodische Grenzen.
+
+::: callout-warning
+## Multikollinearität (Achtung Falle!)
+
+Wenn Sie in ein multiples Modell Prädiktoren aufnehmen, die stark *untereinander* korrelieren (z.B. "Größe des linken Beins" und "Größe des rechten Beins" zur Vorhersage der Körpergröße), gerät die Mathematik der OLS-Regression ins Straucheln. Dies nennt man **Multikollinearität**.
+
+Koeffizienten wechseln plötzlich ihr Vorzeichen oder werden insignifikant. Das Modell als Ganzes bleibt oft stabil, aber die *Interpretation der einzelnen marginalen Effekte* wird extrem unzuverlässig, weil man in der Realität das linke Bein nicht verlängern kann, während man das rechte konstant hält.
+:::

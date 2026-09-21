@@ -1,0 +1,4 @@
+- source: project
+  posit-connect-cloud:
+    - id: 019f2d70-07f3-ee51-3144-70a25b90efc6
+      url: https://connect.posit.cloud/sangmindatascience/content/019f2d70-07f3-ee51-3144-70a25b90efc6
